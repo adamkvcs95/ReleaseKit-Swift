@@ -1,0 +1,31 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1;
+ classes = {};
+ objectVersion = 60;
+ objects = {
+  A10000000000000000000001 = {isa = PBXBuildFile; fileRef = A10000000000000000000002; };
+  A10000000000000000000003 = {isa = PBXBuildFile; productRef = A10000000000000000000004; };
+  A10000000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseKitDemoApp.swift; sourceTree = "<group>"; };
+  A10000000000000000000005 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReleaseKitDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+  A10000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+  A10000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+  A10000000000000000000008 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000003,); runOnlyForDeploymentPostprocessing = 0; };
+  A10000000000000000000009 = {isa = PBXGroup; children = (A1000000000000000000000A,A10000000000000000000006,A10000000000000000000007,A1000000000000000000000B,); sourceTree = "<group>"; };
+  A1000000000000000000000A = {isa = PBXGroup; children = (A10000000000000000000002,); path = ReleaseKitDemo; sourceTree = "<group>"; };
+  A1000000000000000000000B = {isa = PBXGroup; children = (A10000000000000000000005,); name = Products; sourceTree = "<group>"; };
+  A1000000000000000000000C = {isa = PBXNativeTarget; buildConfigurationList = A1000000000000000000000D; buildPhases = (A1000000000000000000000E,A10000000000000000000008,A1000000000000000000000F,); buildRules = (); dependencies = (); name = ReleaseKitDemo; packageProductDependencies = (A10000000000000000000004,); productName = ReleaseKitDemo; productReference = A10000000000000000000005; productType = "com.apple.product-type.application"; };
+  A10000000000000000000010 = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 1600; TargetAttributes = {A1000000000000000000000C = {CreatedOnToolsVersion = 16.0;};};}; buildConfigurationList = A10000000000000000000011; compatibilityVersion = "Xcode 15.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en,hu,Base,); mainGroup = A10000000000000000000009; packageReferences = (A10000000000000000000012,); productRefGroup = A1000000000000000000000B; projectDirPath = ""; projectRoot = ""; targets = (A1000000000000000000000C,); };
+  A1000000000000000000000F = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+  A1000000000000000000000E = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000001,); runOnlyForDeploymentPostprocessing = 0; };
+  A10000000000000000000013 = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = iphoneos; ALWAYS_SEARCH_USER_PATHS = NO; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 6.0;}; name = Debug; };
+  A10000000000000000000014 = {isa = XCBuildConfiguration; buildSettings = {SDKROOT = iphoneos; ALWAYS_SEARCH_USER_PATHS = NO; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 6.0;}; name = Release; };
+  A10000000000000000000015 = {isa = XCBuildConfiguration; baseConfigurationReference = A10000000000000000000006; buildSettings = {PRODUCT_BUNDLE_IDENTIFIER = it.releasek.demo; PRODUCT_NAME = "$(TARGET_NAME)"; INFOPLIST_FILE = ReleaseKitDemo/Info.plist; GENERATE_INFOPLIST_FILE = NO; MARKETING_VERSION = 4.0; CURRENT_PROJECT_VERSION = 1; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";}; name = Debug; };
+  A10000000000000000000016 = {isa = XCBuildConfiguration; baseConfigurationReference = A10000000000000000000007; buildSettings = {PRODUCT_BUNDLE_IDENTIFIER = it.releasek.demo; PRODUCT_NAME = "$(TARGET_NAME)"; INFOPLIST_FILE = ReleaseKitDemo/Info-Release.plist; GENERATE_INFOPLIST_FILE = NO; MARKETING_VERSION = 4.0; CURRENT_PROJECT_VERSION = 1; TARGETED_DEVICE_FAMILY = "1,2";}; name = Release; };
+  A10000000000000000000011 = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000013,A10000000000000000000014,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  A1000000000000000000000D = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000015,A10000000000000000000016,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  A10000000000000000000012 = {isa = XCLocalSwiftPackageReference; relativePath = ../..; };
+  A10000000000000000000004 = {isa = XCSwiftPackageProductDependency; package = A10000000000000000000012; productName = ReleaseKit; };
+ };
+ rootObject = A10000000000000000000010;
+}
