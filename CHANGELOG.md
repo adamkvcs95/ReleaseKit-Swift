@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-rc.9
+
+- Bind the comment composer sheet to an immutable composition request so the selected reply target is preserved on first presentation and after guidelines acceptance.
+- Keep replies to replies under the same top-level thread, while showing the selected reply’s author and excerpt in the composer. New top-level comments get a fresh target-free composer.
+- Disable automatic capitalization and clear inherited text case on the comment editor.
+
 ## 1.0.0-rc.8
 
 - Keep comment list separators aligned across the row instead of inheriting Reply button alignment.

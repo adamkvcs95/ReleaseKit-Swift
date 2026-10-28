@@ -1,6 +1,6 @@
 # 1.0.0 release gate
 
-Candidate: `1.0.0-rc.8`. Do not label it stable or publish `1.0.0` until all checks below are recorded.
+Candidate: `1.0.0-rc.9`. Do not label it stable or publish `1.0.0` until all checks below are recorded.
 
 - Automated Linux/macOS Swift tests and iOS library/demo builds pass on the tagged commit.
 - Backend CI and readiness checks pass; independently gated comment votes, events and optional App Attest are deployed.

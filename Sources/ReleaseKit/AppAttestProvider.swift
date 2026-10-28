@@ -24,7 +24,7 @@ actor AppAttestProvider:RequestAuthorizer {
     private struct Registered:Decodable {let registered:Bool}
     private func post<T:Decodable & Sendable>(_ path:String,body:Data=Data("{}".utf8)) async throws->T {
         var request=URLRequest(url:baseURL.appendingPathComponent(path),timeoutInterval:10);request.httpMethod="POST";request.httpBody=body
-        for (name,value) in ["Content-Type":"application/json","X-RK-App-Key":appKey,"X-RK-Anon-Id":identity,"X-RK-SDK":"ios/1.0.0-rc.8"] {request.setValue(value,forHTTPHeaderField:name)}
+        for (name,value) in ["Content-Type":"application/json","X-RK-App-Key":appKey,"X-RK-Anon-Id":identity,"X-RK-SDK":"ios/1.0.0-rc.9"] {request.setValue(value,forHTTPHeaderField:name)}
         let (data,response)=try await URLSession.shared.data(for:request);guard let response=response as? HTTPURLResponse else{throw ReleaseKitNetworkError.invalidResponse}
         guard response.statusCode==200 else {if let error=try? JSONDecoder().decode(APIErrorEnvelope.self,from:data){throw ReleaseKitNetworkError.server(error.error.code)};throw ReleaseKitNetworkError.http(response.statusCode)}
         return try JSONDecoder().decode(T.self,from:data)

@@ -72,6 +72,16 @@ struct EngagementPill:ViewModifier {
     }
 }
 
+private struct CommentComposition:Identifiable {
+    let id=UUID()
+    let replyingTo:Comment?
+    let parentId:String?
+    init(replyingTo:Comment?,threadParentId:String?=nil){
+        self.replyingTo=replyingTo
+        self.parentId=replyingTo.map{threadParentId ?? $0.id}
+    }
+}
+
 @MainActor struct ReleaseDetailView:View {
     let release:Release;let runtime:Runtime
     @State private var comments:[Comment]=[]
@@ -82,8 +92,8 @@ struct EngagementPill:ViewModifier {
     @State private var actionFailed=false
     @State private var showGuidelines=false
     @State private var agreed=false
-    @State private var showCompose=false
-    @State private var replyTo:String?
+    @State private var composition:CommentComposition?
+    @State private var pendingComposition:CommentComposition?
     @State private var reportedIDs:Set<String>=[]
     @State private var hiddenIDs:Set<String>=[]
     @State private var reportingIDs:Set<String>=[]
@@ -104,7 +114,7 @@ struct EngagementPill:ViewModifier {
                     if comments.isEmpty && !failed && !loading {Text("No comments yet.",bundle:.module).foregroundStyle(.secondary)}
                     ForEach(comments){comment in
                         commentRow(comment)
-                        ForEach(comment.replies){reply in commentRow(reply,isReply:true)}
+                        ForEach(comment.replies){reply in commentRow(reply,isReply:true,threadParentId:comment.id)}
                     }
                     if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.tint(.indigo).disabled(loadingMore)}
                     if actionFailed {Text("This action could not be completed.",bundle:.module).font(.caption).foregroundStyle(.secondary)}
@@ -116,7 +126,7 @@ struct EngagementPill:ViewModifier {
             if commentsEnabled {
                 ToolbarItemGroup(placement:.bottomBar) {
                     Spacer()
-                    Button {replyTo=nil;startCompose()} label:{Image(systemName:"square.and.pencil")}
+                    Button {startCompose()} label:{Image(systemName:"square.and.pencil")}
                         .accessibilityLabel(Text("Add comment",bundle:.module))
                         .disabled(runtime.config?.me.banned == true)
                         .accessibilityIdentifier("releasekit.comment.add")
@@ -136,8 +146,8 @@ struct EngagementPill:ViewModifier {
         }
         .tint(.primary)
         .task{await refresh()}.refreshable{await refresh()}
-        .sheet(isPresented:$showGuidelines,onDismiss:{if agreed {agreed=false;showCompose=true}}){guidelines}
-        .sheet(isPresented:$showCompose){ComposeComment(runtime:runtime,version:release.version,parentId:replyTo,onSaved:{Task{await refresh()}})}
+        .sheet(isPresented:$showGuidelines,onDismiss:{if agreed {agreed=false;composition=pendingComposition};pendingComposition=nil}){guidelines}
+        .sheet(item:$composition){request in ComposeComment(runtime:runtime,version:release.version,request:request,onSaved:{Task{await refresh()}})}
         .alert(String(localized:"Report submitted",bundle:.module),isPresented:$reportSubmitted){Button("OK",role:.cancel){}} message:{Text("Thank you. Your report has been submitted.",bundle:.module)}
     }
     private var guidelines:some View {
@@ -152,7 +162,7 @@ struct EngagementPill:ViewModifier {
                 .toolbar{ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){showGuidelines=false}}}
         }.tint(.primary)
     }
-    private func commentRow(_ comment:Comment,isReply:Bool=false)->some View {
+    private func commentRow(_ comment:Comment,isReply:Bool=false,threadParentId:String?=nil)->some View {
         let removed=comment.isRemoved || hiddenIDs.contains(comment.id)
         return VStack(alignment:.leading,spacing:8) {
             HStack {
@@ -177,7 +187,7 @@ struct EngagementPill:ViewModifier {
                             VoteControl(runtime:runtime,type:"comment",id:comment.id,up:comment.upCount,down:comment.downCount,selected:comment.myVote,compact:true)
                         }
                         Spacer(minLength:0)
-                        Button {replyTo=comment.id;startCompose()} label:{
+                        Button {startCompose(replyingTo:comment,threadParentId:threadParentId)} label:{
                             Label(String(localized:"Reply",bundle:.module),systemImage:"arrowshape.turn.up.left")
                                 .font(.subheadline).frame(minWidth:44,minHeight:44).contentShape(Rectangle())
                         }
@@ -220,7 +230,12 @@ struct EngagementPill:ViewModifier {
             reportedIDs.insert(comment.id);await refresh();reportSubmitted=true
         } catch {actionFailed=true}
     }
-    private func startCompose(){actionFailed=false;if runtime.config?.me.guidelinesAccepted == true {showCompose=true}else{showGuidelines=true}}
+    private func startCompose(replyingTo comment:Comment?=nil,threadParentId:String?=nil){
+        actionFailed=false
+        let request=CommentComposition(replyingTo:comment,threadParentId:threadParentId)
+        if runtime.config?.me.guidelinesAccepted == true {composition=request}
+        else {pendingComposition=request;showGuidelines=true}
+    }
     private func refresh() async {
         guard commentsEnabled else{loading=false;return}
         guard !loadingMore else{return}
@@ -235,21 +250,29 @@ struct EngagementPill:ViewModifier {
 
 @MainActor private struct ComposeComment:View {
     @Environment(\.dismiss) private var dismiss
-    let runtime:Runtime;let version:String;let parentId:String?;let onSaved:()->Void
+    let runtime:Runtime;let version:String;let request:CommentComposition;let onSaved:()->Void
     @State private var text=""
     @State private var sending=false
     @State private var error:String?
     var body:some View {
         NavigationStack {
             Form {
+                if let target=request.replyingTo {
+                    Section {
+                        VStack(alignment:.leading,spacing:6) {
+                            Text(target.author.name ?? "User \(target.author.tag ?? "")").font(.subheadline.bold())
+                            Text(target.body).font(.callout).foregroundStyle(.secondary).lineLimit(3)
+                        }.accessibilityIdentifier("releasekit.comment.replyTarget")
+                    } header:{Text("Replying to",bundle:.module).textCase(nil)}
+                }
                 Section {
                     if let name=runtime.config?.me.displayName {LabeledContent(String(localized:"Posting as",bundle:.module),value:name)}
-                    TextEditor(text:$text).tint(.indigo).frame(minHeight:140).accessibilityLabel(Text("Comment",bundle:.module)).accessibilityIdentifier("releasekit.comment.body")
+                    TextEditor(text:$text).textInputAutocapitalization(.never).textCase(nil).font(.body).tint(.indigo).frame(minHeight:140).accessibilityLabel(Text("Comment",bundle:.module)).accessibilityIdentifier("releasekit.comment.body")
                     Text("\(text.count)/1000").font(.caption).foregroundStyle(.secondary)
                 } footer:{Text("Your comment will appear publicly after posting.",bundle:.module)}
                 if let error {Section {Text(error).foregroundStyle(.red).accessibilityIdentifier("releasekit.comment.error")}}
             }
-            .navigationTitle(String(localized:"Add comment",bundle:.module)).navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(request.replyingTo == nil ? String(localized:"Add comment",bundle:.module):String(localized:"Reply",bundle:.module)).navigationBarTitleDisplayMode(.inline)
             .interactiveDismissDisabled(sending)
             .toolbar {
                 ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){dismiss()}.disabled(sending)}
@@ -259,7 +282,7 @@ struct EngagementPill:ViewModifier {
     }
     private func post() async {
         sending=true;error=nil;defer{sending=false}
-        do{try await runtime.addComment(version:version,body:text,parentId:parentId);onSaved();dismiss()}
+        do{try await runtime.addComment(version:version,body:text,parentId:request.parentId);onSaved();dismiss()}
         catch ReleaseKitNetworkError.server(let code) {
             switch code {
             case "rate_limited":error=String(localized:"Too many comments. Please try again later.",bundle:.module)

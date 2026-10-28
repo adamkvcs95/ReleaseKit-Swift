@@ -992,6 +992,22 @@
           }
         }
       }
+    },
+    "Replying to": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replying to"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Válasz erre"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
