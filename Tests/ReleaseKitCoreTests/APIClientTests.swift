@@ -95,7 +95,7 @@ final class APIClientTests:XCTestCase {
         TransportState.shared.set(id,"online");_=try await api.config();XCTAssertNil(disk.read("__events"))
     }
     func testReportReturnsHiddenStatusAndAuthoritativeCount() async throws {
-        let result=try await client().report(commentId:"c1",reason:"abuse")
+        let result=try await client().report(commentId:"c1")
         XCTAssertTrue(result.reported);XCTAssertEqual(result.hidden,true);XCTAssertEqual(result.releaseCommentCount,0)
     }
     func testPreservesServerVoteFailure() async throws {

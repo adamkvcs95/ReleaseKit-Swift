@@ -2,7 +2,7 @@
   "request": {
     "targetType": "comment",
     "targetId": "c1",
-    "reason": "abuse"
+    "reason": "other"
   },
   "response": {
     "reported": true,

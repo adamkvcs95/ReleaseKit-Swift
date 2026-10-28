@@ -84,7 +84,6 @@ struct EngagementPill:ViewModifier {
     @State private var agreed=false
     @State private var showCompose=false
     @State private var replyTo:String?
-    @State private var reportComment:Comment?
     @State private var reportedIDs:Set<String>=[]
     @State private var hiddenIDs:Set<String>=[]
     @State private var reportingIDs:Set<String>=[]
@@ -139,12 +138,6 @@ struct EngagementPill:ViewModifier {
         .task{await refresh()}.refreshable{await refresh()}
         .sheet(isPresented:$showGuidelines,onDismiss:{if agreed {agreed=false;showCompose=true}}){guidelines}
         .sheet(isPresented:$showCompose){ComposeComment(runtime:runtime,version:release.version,parentId:replyTo,onSaved:{Task{await refresh()}})}
-        .confirmationDialog(String(localized:"Report comment",bundle:.module),isPresented:Binding(get:{reportComment != nil},set:{if !$0{reportComment=nil}}),titleVisibility:.visible){
-            ForEach(["spam","abuse","hate","sexual","illegal","other"],id:\.self){reason in
-                Button(reason.capitalized){guard let comment=reportComment else{return};reportComment=nil;Task{await submitReport(comment,reason:reason)}}
-            }
-            Button(String(localized:"Cancel",bundle:.module),role:.cancel){reportComment=nil}
-        }
         .alert(String(localized:"Report submitted",bundle:.module),isPresented:$reportSubmitted){Button("OK",role:.cancel){}} message:{Text("Thank you. Your report has been submitted.",bundle:.module)}
     }
     private var guidelines:some View {
@@ -190,17 +183,17 @@ struct EngagementPill:ViewModifier {
     @ViewBuilder private func commentActions(_ comment:Comment)->some View {
         if comment.status=="visible" {Button(String(localized:"Reply",bundle:.module)){replyTo=comment.id;startCompose()}}
         if comment.status=="visible" && !comment.author.isMe {
-            Button {reportComment=comment} label:{Label(String(localized:"Report comment",bundle:.module),systemImage:"flag")}
+            Button {Task{await submitReport(comment)}} label:{Label(String(localized:"Report comment",bundle:.module),systemImage:"flag")}
                 .disabled(reportedIDs.contains(comment.id)||reportingIDs.contains(comment.id))
                 .accessibilityIdentifier("releasekit.comment.report.\(comment.id)")
             if comment.author.kind=="anon" {Button(String(localized:"Block user",bundle:.module),role:.destructive){Task{do{try await runtime.block(id:comment.id);await refresh()}catch{actionFailed=true}}}}
         }
     }
-    private func submitReport(_ comment:Comment,reason:String) async {
+    private func submitReport(_ comment:Comment) async {
         guard !reportingIDs.contains(comment.id),!reportedIDs.contains(comment.id) else{return}
         reportingIDs.insert(comment.id);actionFailed=false;defer{reportingIDs.remove(comment.id)}
         do {
-            let result=try await runtime.report(id:comment.id,reason:reason,version:release.version)
+            let result=try await runtime.report(id:comment.id,version:release.version)
             if result.hidden==true {hiddenIDs.insert(comment.id)}
             reportedIDs.insert(comment.id);await refresh();reportSubmitted=true
         } catch {actionFailed=true}

@@ -2,11 +2,11 @@
 
 Native changelog, automatic What's New, release/comment voting and community comments. iOS 17+, Swift 6, system frameworks only.
 
-**Current candidate: 1.0.0-rc.5.** Core and simulator checks are automated; a signed real-iPhone App Attest test is required before promotion to stable 1.0.0. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+**Current candidate: 1.0.0-rc.6.** Core and simulator checks are automated; a signed real-iPhone App Attest test is required before promotion to stable 1.0.0. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ## Install
 
-Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select the `1.0.0-rc.5` pre-release (or `main` while testing), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
+Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select the `1.0.0-rc.6` pre-release (or `main` while testing), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
 
 ```swift
 import SwiftUI
@@ -41,7 +41,7 @@ First install records the version without interrupting the user. A subsequent ve
 
 Release and comment votes can be switched or removed by tapping the selected direction again; list/detail state stays synchronized. Failed writes restore the prior selection/count. SDK config controls release `features.votes` and independent `features.commentVotes`.
 
-Comments use stable friendly names scoped to the app's anonymous installation, with no sign-in. New accepted comments appear automatically. Guidelines acceptance is required before the first post. The server retains content rejection, rate limits, bans, reporting, blocking and developer moderation. Use a visible comment’s ellipsis menu or long-press for reply/report/block. Two distinct anonymous installations reporting a comment automatically hide its text behind “This comment has been hidden because it violated the community guidelines.” Duplicate reports do not count again; developers can review reports in the dashboard. Comment lists paginate; up to three replies per thread are inlined. Own legacy pending posts show Awaiting review. The composer preserves its draft after errors. The preview comment count updates from the server response.
+Comments use stable friendly names scoped to the app's anonymous installation, with no sign-in. New accepted comments appear automatically. Guidelines acceptance is required before the first post. The server retains content rejection, rate limits, bans, reporting, blocking and developer moderation. Use a visible comment’s ellipsis menu or long-press for reply/report/block. Reporting submits immediately without asking the user for a reason; developers must provide a justification when resolving reports. Two distinct anonymous installations reporting a comment automatically hide its text behind “This comment has been hidden because it violated the community guidelines.” Duplicate reports do not count again; developers can review reports in the dashboard. Comment lists paginate; up to three replies per thread are inlined. Own legacy pending posts show Awaiting review. The composer preserves its draft after errors. The preview comment count updates from the server response.
 
 ## Offline behavior
 

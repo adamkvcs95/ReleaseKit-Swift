@@ -34,7 +34,7 @@ package actor APIClient {
         guard let url=components.url else {throw ReleaseKitNetworkError.invalidURL}
         var request=URLRequest(url:url,timeoutInterval:10)
         if let body {request.httpMethod="POST";request.httpBody=body;request.setValue("application/json",forHTTPHeaderField:"Content-Type")}
-        request.setValue(appKey,forHTTPHeaderField:"X-RK-App-Key");request.setValue(anonID,forHTTPHeaderField:"X-RK-Anon-Id");request.setValue("ios/1.0.0-rc.5",forHTTPHeaderField:"X-RK-SDK")
+        request.setValue(appKey,forHTTPHeaderField:"X-RK-App-Key");request.setValue(anonID,forHTTPHeaderField:"X-RK-Anon-Id");request.setValue("ios/1.0.0-rc.6",forHTTPHeaderField:"X-RK-SDK")
         request.setValue(Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "",forHTTPHeaderField:"X-RK-App-Version")
         request.setValue(Locale.preferredLanguages.prefix(3).joined(separator:", "),forHTTPHeaderField:"Accept-Language")
         let region:String?
@@ -91,7 +91,7 @@ package actor APIClient {
     private func post<Payload:Encodable & Sendable,Response:Decodable & Sendable>(_ path:String,_ payload:Payload) async throws -> Response {try await request(path,body:JSONEncoder().encode(payload))}
     private struct Vote:Encodable,Sendable {let targetType:String;let targetId:String;let value:Int}
     private struct Content:Encodable,Sendable {let body:String;let parentId:String?;let locale:String?}
-    private struct Report:Encodable,Sendable {let targetType:String="comment";let targetId:String;let reason:String}
+    private struct Report:Encodable,Sendable {let targetType:String="comment";let targetId:String;let reason:String="other"}
     private struct Block:Encodable,Sendable {let commentId:String}
     private struct Empty:Encodable,Sendable {}
     private struct Event:Codable,Sendable {let type:String;let version:String?;let releaseId:String?}
@@ -100,7 +100,7 @@ package actor APIClient {
     package func comments(version:String,cursor:String?=nil) async throws -> CommentPage {try await request("api/v1/sdk/releases/\(version)/comments",query:cursor.map{[URLQueryItem(name:"cursor",value:$0)]} ?? [])}
     package func acceptGuidelines() async throws {let _:Accepted=try await post("api/v1/sdk/guidelines/accept",Empty())}
     package func addComment(version:String,body:String,parentId:String?=nil) async throws -> Comment {try await post("api/v1/sdk/releases/\(version)/comments",Content(body:body,parentId:parentId,locale:Locale.current.identifier))}
-    package func report(commentId:String,reason:String) async throws -> Reported {try await post("api/v1/sdk/reports",Report(targetId:commentId,reason:reason))}
+    package func report(commentId:String) async throws -> Reported {try await post("api/v1/sdk/reports",Report(targetId:commentId))}
     package func block(commentId:String) async throws {let _:Blocked=try await post("api/v1/sdk/blocks",Block(commentId:commentId))}
     private func queuedEvents()->[Event]{guard let data=cache?.read("__events")?.data else{return []};return (try? JSONDecoder().decode([Event].self,from:data)) ?? []}
     private func flushEvents() async {

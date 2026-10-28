@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.6
+
+- Submit a report directly from the comment menu without asking the user to choose a reason. Developer moderation still requires a written justification.
+
 ## 1.0.0-rc.5
 
 - Report comments from their ellipsis menu or long-press actions, with reason selection and confirmation.
