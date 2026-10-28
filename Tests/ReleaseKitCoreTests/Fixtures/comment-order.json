@@ -1,0 +1,103 @@
+{
+  "request": {
+    "path": "/api/v1/sdk/releases/4.0/comments?sort=new"
+  },
+  "response": {
+    "items": [
+      {
+        "id": "root-newer",
+        "author": {
+          "kind": "anon",
+          "name": "Root Writer",
+          "tag": "AB12",
+          "verified": false,
+          "isMe": false
+        },
+        "body": "root-newer",
+        "createdAt": "2026-10-28T11:00:00Z",
+        "upCount": 0,
+        "downCount": 0,
+        "myVote": 0,
+        "status": "visible",
+        "removed": false,
+        "replies": [],
+        "replyCount": 0,
+        "hasMoreReplies": false,
+        "repliesNextCursor": null
+      },
+      {
+        "id": "root-older",
+        "author": {
+          "kind": "anon",
+          "name": "Root Writer",
+          "tag": "AB12",
+          "verified": false,
+          "isMe": false
+        },
+        "body": "root-older",
+        "createdAt": "2026-10-28T10:00:00Z",
+        "upCount": 0,
+        "downCount": 0,
+        "myVote": 0,
+        "status": "visible",
+        "removed": false,
+        "replies": [
+          {
+            "id": "reply-latest",
+            "author": {
+              "kind": "anon",
+              "name": "Root Writer",
+              "tag": "AB12",
+              "verified": false,
+              "isMe": false
+            },
+            "body": "reply-latest",
+            "createdAt": "2026-10-28T14:00:00Z",
+            "upCount": 0,
+            "downCount": 0,
+            "myVote": 0,
+            "status": "visible",
+            "removed": false,
+            "replies": [],
+            "replyCount": 0,
+            "hasMoreReplies": false,
+            "repliesNextCursor": null
+          },
+          {
+            "id": "reply-earlier",
+            "author": {
+              "kind": "anon",
+              "name": "Root Writer",
+              "tag": "AB12",
+              "verified": false,
+              "isMe": false
+            },
+            "body": "reply-earlier",
+            "createdAt": "2026-10-28T12:00:00Z",
+            "upCount": 0,
+            "downCount": 0,
+            "myVote": 0,
+            "status": "visible",
+            "removed": false,
+            "replies": [],
+            "replyCount": 0,
+            "hasMoreReplies": false,
+            "repliesNextCursor": null
+          }
+        ],
+        "replyCount": 2,
+        "hasMoreReplies": false,
+        "repliesNextCursor": null
+      }
+    ],
+    "nextCursor": null
+  },
+  "rootOrder": [
+    "root-newer",
+    "root-older"
+  ],
+  "replyOrder": [
+    "reply-latest",
+    "reply-earlier"
+  ]
+}

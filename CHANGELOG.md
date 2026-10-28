@@ -2,7 +2,9 @@
 
 ## 1.0.0-rc.10
 
-- Connect native comment thread guides across adjacent reply rows and Load more replies rows. Keep content padding inside the full-height guides and inset horizontal separators by reply depth so they start beside the text.
+- Show comment threads newest-first by their parent comment date; keep nested replies under their parent and sibling replies newest-first.
+
+- Connect native comment thread guides across adjacent reply rows and Load more replies rows. Keep content padding inside the full-height guides and inset each horizontal separator by the deeper of its two adjacent rows, including the boundary above the first reply.
 
 ## 1.0.0-rc.9
 

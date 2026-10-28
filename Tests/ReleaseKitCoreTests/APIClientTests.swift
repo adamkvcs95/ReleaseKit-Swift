@@ -28,12 +28,13 @@ private final class SDKProtocol:URLProtocol,@unchecked Sendable {
                 status=401;payload=["error":["code":"invalid_app_key","message":"Invalid headers"]]
             } else if request.url!.path.hasSuffix("/config") {payload=fixture["config"]!}
             else if request.url!.path.hasSuffix("/reports") {let report=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"report-hidden",withExtension:"json")!)) as! [String:Any];payload=report["response"]!}
-            else if request.url!.path.hasSuffix("/replies") {let nested=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"nested-comments",withExtension:"json")!)) as! [String:Any];let page=nested["page"] as! [String:Any];let root=(page["items"] as! [[String:Any]])[0];payload=["items":root["replies"]!,"nextCursor":NSNull()]}
+            else if request.url!.path.hasSuffix("/replies") {guard URLComponents(url:request.url!,resolvingAgainstBaseURL:false)?.queryItems?.contains(URLQueryItem(name:"sort",value:"new"))==true else{throw URLError(.badURL)};let nested=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"nested-comments",withExtension:"json")!)) as! [String:Any];let page=nested["page"] as! [String:Any];let root=(page["items"] as! [[String:Any]])[0];payload=["items":root["replies"]!,"nextCursor":NSNull()]}
             else if request.url!.path.hasSuffix("/events") {payload=[String:String]()}
             else if request.url!.path.hasSuffix("/guidelines/accept") {payload=["accepted":true]}
             else if request.url!.path.hasSuffix("/comments") {
                 let comment=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"comments",withExtension:"json")!)) as! [String:Any]
                 if request.httpMethod=="POST" {payload=comment["response"]!}
+                else if URLComponents(url:request.url!,resolvingAgainstBaseURL:false)?.queryItems?.contains(URLQueryItem(name:"sort",value:"new")) != true {throw URLError(.badURL)}
                 else if request.url!.query?.contains("cursor=next-page")==true {payload=["items":[],"nextCursor":NSNull()]}
                 else {payload=["items":[comment["response"]!],"nextCursor":"next-page"]}
             }

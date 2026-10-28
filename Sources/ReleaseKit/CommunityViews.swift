@@ -13,6 +13,7 @@ struct EngagementPill:ViewModifier {
 
 private struct CommentThreadGuides:ViewModifier {
     let depth:Int
+    let separatorDepth:Int
     func body(content:Content)->some View {
         content.padding(.leading,CGFloat(depth)*12)
             .overlay(alignment:.leading) {
@@ -23,7 +24,7 @@ private struct CommentThreadGuides:ViewModifier {
                 }
             }
             .listRowInsets(EdgeInsets(top:0,leading:16,bottom:0,trailing:16))
-            .alignmentGuide(.listRowSeparatorLeading){_ in CGFloat(depth)*12}
+            .alignmentGuide(.listRowSeparatorLeading){_ in CGFloat(separatorDepth)*12}
             .alignmentGuide(.listRowSeparatorTrailing){dimensions in dimensions.width}
     }
 }
@@ -96,7 +97,8 @@ private struct CommentComposition:Identifiable {
 }
 
 private struct CommentThreadRow:Identifiable {
-    let comment:Comment;let depth:Int;var loadMore=false
+    let comment:Comment;let depth:Int;var loadMore=false;var separatorDepth=0
+    var displayDepth:Int {depth+(loadMore ? 1:0)}
     var id:String {comment.id+(loadMore ? ":more":"")}
 }
 
@@ -140,9 +142,9 @@ private struct CommentThreadRow:Identifiable {
                             Button(String(localized:"Load more replies",bundle:.module)){Task{await loadReplies(row.comment)}}
                                 .tint(.indigo).disabled(loadingReplyParents.contains(row.comment.id))
                                 .padding(.vertical,12)
-                                .modifier(CommentThreadGuides(depth:row.depth+1))
+                                .modifier(CommentThreadGuides(depth:row.depth+1,separatorDepth:row.separatorDepth))
                                 .accessibilityIdentifier("releasekit.comment.more.\(row.comment.id)")
-                        } else {commentRow(row.comment,depth:row.depth)}
+                        } else {commentRow(row.comment,depth:row.depth,separatorDepth:row.separatorDepth)}
                     }
                     if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.tint(.indigo).disabled(loadingMore)}
                     if actionFailed {Text("This action could not be completed.",bundle:.module).font(.caption).foregroundStyle(.secondary)}
@@ -191,7 +193,7 @@ private struct CommentThreadRow:Identifiable {
                 .toolbar{ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){showGuidelines=false}}}
         }.tint(.primary)
     }
-    private func commentRow(_ comment:Comment,depth:Int=0)->some View {
+    private func commentRow(_ comment:Comment,depth:Int=0,separatorDepth:Int=0)->some View {
         let removed=comment.isRemoved || hiddenIDs.contains(comment.id)
         return VStack(alignment:.leading,spacing:8) {
             HStack {
@@ -229,7 +231,7 @@ private struct CommentThreadRow:Identifiable {
             }
         }
         .padding(.vertical,12)
-        .modifier(CommentThreadGuides(depth:depth))
+        .modifier(CommentThreadGuides(depth:depth,separatorDepth:separatorDepth))
         .accessibilityElement(children:.contain).contextMenu {
             if !removed && !comment.author.isMe {commentActions(comment)}
         }
@@ -268,7 +270,12 @@ private struct CommentThreadRow:Identifiable {
                 if more {rows.append(CommentThreadRow(comment:comment,depth:depth,loadMore:true))}
             }
         }
-        append(comments,depth:0,ancestors:[]);return rows
+        append(comments,depth:0,ancestors:[])
+        for index in rows.indices {
+            let nextDepth=index+1<rows.count ? rows[index+1].displayDepth:0
+            rows[index].separatorDepth=max(rows[index].displayDepth,nextDepth)
+        }
+        return rows
     }
     private func loadReplies(_ comment:Comment) async {
         guard !loadingReplyParents.contains(comment.id) else{return}

@@ -97,8 +97,8 @@ package actor APIClient {
     private struct Event:Codable,Sendable {let type:String;let version:String?;let releaseId:String?}
     private struct Events:Codable,Sendable {let events:[Event]}
     package func vote(targetType:String,targetId:String,value:Int) async throws -> VoteResult {try await post("api/v1/sdk/votes",Vote(targetType:targetType,targetId:targetId,value:value))}
-    package func comments(version:String,cursor:String?=nil) async throws -> CommentPage {try await request("api/v1/sdk/releases/\(version)/comments",query:cursor.map{[URLQueryItem(name:"cursor",value:$0)]} ?? [])}
-    package func replies(commentId:String,cursor:String?=nil) async throws -> CommentPage {try await request("api/v1/sdk/comments/\(commentId)/replies",query:cursor.map{[URLQueryItem(name:"cursor",value:$0)]} ?? [])}
+    package func comments(version:String,cursor:String?=nil) async throws -> CommentPage {try await request("api/v1/sdk/releases/\(version)/comments",query:[URLQueryItem(name:"sort",value:"new")]+(cursor.map{[URLQueryItem(name:"cursor",value:$0)]} ?? []))}
+    package func replies(commentId:String,cursor:String?=nil) async throws -> CommentPage {try await request("api/v1/sdk/comments/\(commentId)/replies",query:[URLQueryItem(name:"sort",value:"new")]+(cursor.map{[URLQueryItem(name:"cursor",value:$0)]} ?? []))}
     package func acceptGuidelines() async throws {let _:Accepted=try await post("api/v1/sdk/guidelines/accept",Empty())}
     package func addComment(version:String,body:String,parentId:String?=nil) async throws -> Comment {try await post("api/v1/sdk/releases/\(version)/comments",Content(body:body,parentId:parentId,locale:Locale.current.identifier))}
     package func report(commentId:String) async throws -> Reported {try await post("api/v1/sdk/reports",Report(targetId:commentId))}

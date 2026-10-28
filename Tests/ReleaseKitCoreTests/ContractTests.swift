@@ -10,6 +10,12 @@ final class ContractTests:XCTestCase {
         XCTAssertEqual(root.id,"c1");XCTAssertEqual(child.id,"c2");XCTAssertEqual(grandchild.id,"c3")
         XCTAssertEqual(grandchild.body,"lowercase Mixed CASE nested reply");XCTAssertEqual(grandchild.hasMoreReplies,false)
     }
+    func testDecodesChronologicalThreadOrder() throws {
+        struct Fixture:Decodable {let response:CommentPage;let rootOrder:[String];let replyOrder:[String]}
+        let fixture=try JSONDecoder().decode(Fixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"comment-order",withExtension:"json")!))
+        XCTAssertEqual(fixture.response.items.map(\.id),fixture.rootOrder)
+        XCTAssertEqual(fixture.response.items[1].replies.map(\.id),fixture.replyOrder)
+    }
     func testReportedCommentIsRedactedAndCountIsReturned() throws {
         struct Fixture:Decodable {let response:Reported;let page:CommentPage}
         let fixture=try JSONDecoder().decode(Fixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"report-hidden",withExtension:"json")!))
