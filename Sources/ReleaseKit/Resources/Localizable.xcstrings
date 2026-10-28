@@ -880,6 +880,22 @@
           }
         }
       }
+    },
+    "More options": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More options"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "További lehetőségek"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

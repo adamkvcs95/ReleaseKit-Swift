@@ -92,13 +92,21 @@ import ReleaseKitCore
                         .disabled(runtime.config?.me.banned == true).accessibilityIdentifier("releasekit.comment.add")
                 } else {Text("Comments are disabled for this app.",bundle:.module).foregroundStyle(.secondary)}
             }
-            Section {
-                if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)}
-                if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}
-                if runtime.config?.branding.showPoweredBy == true {Link(String(localized:"Powered by ReleaseKit",bundle:.module),destination:URL(string:"https://releasek.it")!).font(.caption).foregroundStyle(.secondary)}
-            }
         }
         .navigationTitle(release.version).navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement:.topBarTrailing) {
+                Menu {
+                    if let url=runtime.config?.legal.guidelinesUrl {
+                        Link(destination:url){Label(String(localized:"Community guidelines",bundle:.module),systemImage:"text.book.closed")}
+                    }
+                    if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)") {
+                        Link(destination:url){Label(String(localized:"Contact developer",bundle:.module),systemImage:"envelope")}
+                    }
+                } label:{Image(systemName:"ellipsis").accessibilityLabel(Text("More options",bundle:.module))}
+                    .accessibilityIdentifier("releasekit.release.menu")
+            }
+        }
         .task{await refresh()}.refreshable{await refresh()}
         .sheet(isPresented:$showGuidelines,onDismiss:{if agreed {agreed=false;showCompose=true}}){guidelines}
         .sheet(isPresented:$showCompose){ComposeComment(runtime:runtime,version:release.version,parentId:replyTo,onSaved:{Task{await refresh()}})}
