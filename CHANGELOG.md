@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-rc.8
+
+- Keep comment list separators aligned across the row instead of inheriting Reply button alignment.
+- Mark indented replies with a subtle vertical thread line.
+
 ## 1.0.0-rc.7
 
 - Move Reply beside each comment’s votes, aligned to the trailing edge, including replies and own comments.

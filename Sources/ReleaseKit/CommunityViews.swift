@@ -104,7 +104,7 @@ struct EngagementPill:ViewModifier {
                     if comments.isEmpty && !failed && !loading {Text("No comments yet.",bundle:.module).foregroundStyle(.secondary)}
                     ForEach(comments){comment in
                         commentRow(comment)
-                        ForEach(comment.replies){reply in commentRow(reply).padding(.leading,16)}
+                        ForEach(comment.replies){reply in commentRow(reply,isReply:true)}
                     }
                     if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.tint(.indigo).disabled(loadingMore)}
                     if actionFailed {Text("This action could not be completed.",bundle:.module).font(.caption).foregroundStyle(.secondary)}
@@ -152,7 +152,7 @@ struct EngagementPill:ViewModifier {
                 .toolbar{ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){showGuidelines=false}}}
         }.tint(.primary)
     }
-    private func commentRow(_ comment:Comment)->some View {
+    private func commentRow(_ comment:Comment,isReply:Bool=false)->some View {
         let removed=comment.isRemoved || hiddenIDs.contains(comment.id)
         return VStack(alignment:.leading,spacing:8) {
             HStack {
@@ -188,7 +188,18 @@ struct EngagementPill:ViewModifier {
                 }
                 if comment.status=="pending" {Label(String(localized:"Awaiting review",bundle:.module),systemImage:"clock").font(.caption).foregroundStyle(.secondary)}
             }
-        }.padding(.vertical,4).accessibilityElement(children:.contain).contextMenu {
+        }
+        .padding(.vertical,4)
+        .padding(.leading,isReply ? 16:0)
+        .overlay(alignment:.leading) {
+            if isReply {
+                RoundedRectangle(cornerRadius:1).fill(Color.secondary.opacity(0.3))
+                    .frame(width:2).padding(.vertical,8).accessibilityHidden(true)
+            }
+        }
+        .alignmentGuide(.listRowSeparatorLeading){_ in 0}
+        .alignmentGuide(.listRowSeparatorTrailing){dimensions in dimensions.width}
+        .accessibilityElement(children:.contain).contextMenu {
             if !removed && !comment.author.isMe {commentActions(comment)}
         }
     }
