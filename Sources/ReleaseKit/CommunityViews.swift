@@ -2,6 +2,15 @@
 import SwiftUI
 import ReleaseKitCore
 
+struct EngagementPill:ViewModifier {
+    var compact=true
+    func body(content:Content)->some View {
+        content
+            .background{Capsule().fill(Color(uiColor:.secondarySystemGroupedBackground)).frame(height:compact ? 36:40)}
+            .overlay{Capsule().strokeBorder(Color.primary.opacity(0.14),lineWidth:1).frame(height:compact ? 36:40).allowsHitTesting(false)}
+    }
+}
+
 @MainActor struct VoteControl:View {
     let runtime:Runtime;let type:String;let id:String
     private let initialState:VoteState
@@ -12,23 +21,30 @@ import ReleaseKitCore
     @State private var failed=false
     init(runtime:Runtime,type:String,id:String,up:Int,down:Int,selected:Int,compact:Bool=false){self.runtime=runtime;self.type=type;self.id=id;self.compact=compact;initialState=VoteState(up:up,down:down,selected:selected)}
     var body:some View {
-        VStack(alignment:.leading,spacing:8) {
-            HStack(spacing:10) {
-                button(value:1,count:state.upCount,symbol:"hand.thumbsup",label:String(localized:"Upvote",bundle:.module))
-                button(value:-1,count:state.downCount,symbol:"hand.thumbsdown",label:String(localized:"Downvote",bundle:.module))
-                if busy {ProgressView().controlSize(.small).accessibilityLabel(Text("Saving vote",bundle:.module))}
+        VStack(alignment:.leading,spacing:4) {
+            HStack(spacing:0) {
+                button(value:1,count:state.upCount,label:String(localized:"Upvote",bundle:.module))
+                Rectangle().fill(Color.primary.opacity(0.12)).frame(width:1,height:20).accessibilityHidden(true)
+                button(value:-1,count:state.downCount,label:String(localized:"Downvote",bundle:.module))
             }
+            .modifier(EngagementPill(compact:compact))
+            .fixedSize(horizontal:true,vertical:false)
             if failed {Text(String(localized:"Could not save your vote.",bundle:.module)).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("releasekit.vote.error")}
         }
     }
-    private func button(value:Int,count:Int,symbol:String,label:String)->some View {
+    private func button(value:Int,count:Int,label:String)->some View {
         Button {Task{await submit(value)}} label:{
-            Label("\(count)",systemImage:state.selected==value ? symbol+".fill":symbol)
-                .font(compact ? .caption.weight(.medium):.subheadline.weight(.medium)).monospacedDigit()
-                .frame(minWidth:compact ? 30:54,minHeight:44)
-                .padding(.horizontal,compact ? 6:8)
-                .background(state.selected==value ? Color.accentColor.opacity(0.14):Color.secondary.opacity(0.08),in:RoundedRectangle(cornerRadius:12))
-                .foregroundStyle(state.selected==value ? Color.accentColor:Color.secondary)
+            HStack(spacing:8) {
+                if busy && value == -1 {ProgressView().controlSize(.small).frame(width:compact ? 19:21,height:24)}
+                else {Image(systemName:value==1 ? "arrowtriangle.up":"arrowtriangle.down").font(.system(size:compact ? 17:19,weight:.medium)).frame(width:compact ? 19:21,height:compact ? 22:24)}
+                if value==1 {
+                    Text("\(state.upCount-state.downCount)").font(compact ? .subheadline.weight(.semibold):.body.weight(.semibold)).monospacedDigit()
+                        .foregroundStyle(state.selected==0 ? Color.primary:Color.accentColor)
+                }
+            }
+            .padding(.horizontal,12).frame(minWidth:44,minHeight:44)
+            .foregroundStyle(state.selected==value ? Color.accentColor:Color.primary)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain).disabled(busy)
         .accessibilityLabel(label).accessibilityValue(String(count))

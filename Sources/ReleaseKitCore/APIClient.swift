@@ -34,7 +34,7 @@ package actor APIClient {
         guard let url=components.url else {throw ReleaseKitNetworkError.invalidURL}
         var request=URLRequest(url:url,timeoutInterval:10)
         if let body {request.httpMethod="POST";request.httpBody=body;request.setValue("application/json",forHTTPHeaderField:"Content-Type")}
-        request.setValue(appKey,forHTTPHeaderField:"X-RK-App-Key");request.setValue(anonID,forHTTPHeaderField:"X-RK-Anon-Id");request.setValue("ios/1.0.0-rc.1",forHTTPHeaderField:"X-RK-SDK")
+        request.setValue(appKey,forHTTPHeaderField:"X-RK-App-Key");request.setValue(anonID,forHTTPHeaderField:"X-RK-Anon-Id");request.setValue("ios/1.0.0-rc.2",forHTTPHeaderField:"X-RK-SDK")
         request.setValue(Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "",forHTTPHeaderField:"X-RK-App-Version")
         request.setValue(Locale.preferredLanguages.prefix(3).joined(separator:", "),forHTTPHeaderField:"Accept-Language")
         let region:String?

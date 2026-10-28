@@ -178,18 +178,20 @@ private struct WhatsNewSheet:View {
                                             .font(.subheadline).foregroundStyle(.secondary).lineLimit(3).multilineTextAlignment(.leading).frame(maxWidth:.infinity,alignment:.leading)
                                     }.contentShape(Rectangle())
                                 }.buttonStyle(.plain).accessibilityIdentifier("releasekit.release.\(release.id)")
-                                HStack {
+                                HStack(alignment:.top,spacing:8) {
                                     if runtime.config?.features.votes == true {
                                         VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote,compact:true)
                                             .id("\(release.id)-\(release.upCount)-\(release.downCount)-\(release.myVote)")
                                     }
-                                    Spacer()
                                     NavigationLink {ReleaseDetailView(release:release,runtime:runtime)} label:{
-                                        Label("\(runtime.commentCounts[release.version] ?? release.commentCount)",systemImage:"bubble.right")
-                                            .font(.caption).monospacedDigit().foregroundStyle(.secondary).frame(minHeight:44)
-                                    }.buttonStyle(.plain).accessibilityLabel(Text("Comments",bundle:.module))
+                                        Label("\(runtime.commentCounts[release.version] ?? release.commentCount)",systemImage:"bubble.left")
+                                            .font(.subheadline.weight(.semibold)).monospacedDigit().foregroundStyle(.primary)
+                                            .padding(.horizontal,14).frame(minHeight:44).modifier(EngagementPill())
+                                    }.buttonStyle(.plain).fixedSize(horizontal:true,vertical:false)
+                                        .accessibilityLabel(Text("Comments",bundle:.module))
                                         .accessibilityValue(String(runtime.commentCounts[release.version] ?? release.commentCount))
                                         .accessibilityIdentifier("releasekit.comments.count.\(release.id)")
+                                    Spacer(minLength:0)
                                 }
                             }
                             .padding(20).frame(maxWidth:.infinity,alignment:.leading)
