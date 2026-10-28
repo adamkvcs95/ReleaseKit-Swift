@@ -88,13 +88,20 @@ import ReleaseKitCore
                     }
                     if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.disabled(loadingMore)}
                     if actionFailed {Text("This action could not be completed.",bundle:.module).font(.caption).foregroundStyle(.secondary)}
-                    Button {replyTo=nil;startCompose()} label:{Label(String(localized:"Add comment",bundle:.module),systemImage:"square.and.pencil")}
-                        .disabled(runtime.config?.me.banned == true).accessibilityIdentifier("releasekit.comment.add")
                 } else {Text("Comments are disabled for this app.",bundle:.module).foregroundStyle(.secondary)}
             }
         }
         .navigationTitle(release.version).navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if commentsEnabled {
+                ToolbarItemGroup(placement:.bottomBar) {
+                    Spacer()
+                    Button {replyTo=nil;startCompose()} label:{Image(systemName:"square.and.pencil")}
+                        .accessibilityLabel(Text("Add comment",bundle:.module))
+                        .disabled(runtime.config?.me.banned == true)
+                        .accessibilityIdentifier("releasekit.comment.add")
+                }
+            }
             ToolbarItem(placement:.topBarTrailing) {
                 Menu {
                     if let url=runtime.config?.legal.guidelinesUrl {
