@@ -1,6 +1,6 @@
 # 1.0.0 release gate
 
-Candidate: `1.0.0-rc.4`. Do not label it stable or publish `1.0.0` until all checks below are recorded.
+Candidate: `1.0.0-rc.5`. Do not label it stable or publish `1.0.0` until all checks below are recorded.
 
 - Automated Linux/macOS Swift tests and iOS library/demo builds pass on the tagged commit.
 - Backend CI and readiness checks pass; independently gated comment votes, events and optional App Attest are deployed.
@@ -17,8 +17,10 @@ The host Mac currently has no valid code-signing identities. The owner has not s
 
 ## Local verification, 2026-10-28
 
-- 88 backend/core tests pass, including the official Apple certificate vector at its documented valid date, real ECDSA assertion signatures, nonce reuse rejection and independent comment-vote gates.
-- 23 Swift tests pass, including shared signing contracts, ETag 304, disk isolation/expiry, offline fallback, HTTP denial eviction, no queued user writes and the bounded event queue.
+- 99 backend/core tests pass, including the official Apple certificate vector at its documented valid date, real ECDSA assertion signatures, nonce reuse rejection and independent comment-vote gates.
+- 25 Swift tests pass, including shared signing contracts, ETag 304, disk isolation/expiry, offline fallback, HTTP denial eviction, no queued user writes and the bounded event queue.
 - iOS library/demo compile with Swift 6.
 - Simulator: 3.9 first launch recorded without an update sheet; 4.0 presented automatically once; next launch skipped. Offline release history/comments and vote rollback verified through Device Hub.
 - Required-reason API review: no UserDefaults, file timestamps, disk capacity or system boot-time APIs added.
+
+- rc.5: report threshold, duplicate/concurrent reports, dismissed-report restoration, reply redaction and shared response contracts pass automated checks. iOS demo builds successfully.

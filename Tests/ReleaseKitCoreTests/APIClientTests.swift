@@ -27,6 +27,7 @@ private final class SDKProtocol:URLProtocol,@unchecked Sendable {
             if request.value(forHTTPHeaderField:"X-RK-App-Key") != "rk_pub_0123456789ABCDEFGHIJKLMN" || request.value(forHTTPHeaderField:"X-RK-Anon-Id") != "a2e6885b-9e93-4308-a632-81d8effd08bd" {
                 status=401;payload=["error":["code":"invalid_app_key","message":"Invalid headers"]]
             } else if request.url!.path.hasSuffix("/config") {payload=fixture["config"]!}
+            else if request.url!.path.hasSuffix("/reports") {let report=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"report-hidden",withExtension:"json")!)) as! [String:Any];payload=report["response"]!}
             else if request.url!.path.hasSuffix("/events") {payload=[String:String]()}
             else if request.url!.path.hasSuffix("/guidelines/accept") {payload=["accepted":true]}
             else if request.url!.path.hasSuffix("/comments") {
@@ -92,6 +93,10 @@ final class APIClientTests:XCTestCase {
         let disk=ResponseCache(directory:root,scope:"\(base.absoluteString)|\(key)|\(anon)")
         let queued=try XCTUnwrap(disk.read("__events"));XCTAssertEqual((try JSONSerialization.jsonObject(with:queued.data) as! [Any]).count,50)
         TransportState.shared.set(id,"online");_=try await api.config();XCTAssertNil(disk.read("__events"))
+    }
+    func testReportReturnsHiddenStatusAndAuthoritativeCount() async throws {
+        let result=try await client().report(commentId:"c1",reason:"abuse")
+        XCTAssertTrue(result.reported);XCTAssertEqual(result.hidden,true);XCTAssertEqual(result.releaseCommentCount,0)
     }
     func testPreservesServerVoteFailure() async throws {
         do {_=try await client().vote(targetType:"release",targetId:"rel1",value:-1);XCTFail("Expected rate limit")}

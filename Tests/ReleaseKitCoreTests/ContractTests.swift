@@ -3,6 +3,12 @@ import XCTest
 @testable import ReleaseKitCore
 
 final class ContractTests:XCTestCase {
+    func testReportedCommentIsRedactedAndCountIsReturned() throws {
+        struct Fixture:Decodable {let response:Reported;let page:CommentPage}
+        let fixture=try JSONDecoder().decode(Fixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"report-hidden",withExtension:"json")!))
+        XCTAssertTrue(fixture.response.reported);XCTAssertEqual(fixture.response.hidden,true);XCTAssertEqual(fixture.response.releaseCommentCount,0)
+        let comment=try XCTUnwrap(fixture.page.items.first);XCTAssertTrue(comment.isRemoved);XCTAssertEqual(comment.body,hiddenCommentNotice)
+    }
     func testSharedAttestationCanonicalRequestAndCommentVote() throws {
         struct Fixture:Decodable {
             struct Request:Decodable {let method:String;let path:String;let bodySHA256:String;let timestamp:String;let challenge:String}

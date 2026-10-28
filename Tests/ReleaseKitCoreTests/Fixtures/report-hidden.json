@@ -1,0 +1,42 @@
+{
+  "request": {
+    "targetType": "comment",
+    "targetId": "c1",
+    "reason": "abuse"
+  },
+  "response": {
+    "reported": true,
+    "hidden": true,
+    "releaseCommentCount": 0
+  },
+  "comment": {
+    "id": "c1",
+    "body": "This comment has been hidden because it violated the community guidelines.",
+    "status": "hidden",
+    "removed": true
+  },
+  "page": {
+    "items": [
+      {
+        "id": "c1",
+        "author": {
+          "kind": "anon",
+          "name": "Sunny Otter AB12",
+          "tag": "XYAB12",
+          "isMe": false,
+          "verified": false
+        },
+        "body": "This comment has been hidden because it violated the community guidelines.",
+        "createdAt": "2026-10-28T10:00:00Z",
+        "upCount": 0,
+        "downCount": 0,
+        "myVote": 0,
+        "status": "hidden",
+        "removed": true,
+        "replies": [],
+        "replyCount": 0
+      }
+    ],
+    "nextCursor": null
+  }
+}

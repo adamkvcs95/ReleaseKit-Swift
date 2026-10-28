@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0-rc.5
+
+- Report comments from their ellipsis menu or long-press actions, with reason selection and confirmation.
+- Two distinct installation reports automatically hide a comment. Hidden content is replaced with an English community-guidelines notice, without voting or reply actions.
+- Apply the authoritative comment count after reporting and invalidate cached discussions.
+
 ## 1.0.0-rc.4
 
 - Use adaptive neutral colors for navigation and toolbar actions, including Done, back, overflow, compose, Cancel and Post.

@@ -944,6 +944,54 @@
           }
         }
       }
+    },
+    "Comment actions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comment actions"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hozzászólás műveletei"
+          }
+        }
+      }
+    },
+    "Report submitted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report submitted"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jelentés elküldve"
+          }
+        }
+      }
+    },
+    "Thank you. Your report has been submitted.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thank you. Your report has been submitted."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Köszönjük. A jelentésedet elküldtük."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

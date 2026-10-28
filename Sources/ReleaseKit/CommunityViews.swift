@@ -85,6 +85,10 @@ struct EngagementPill:ViewModifier {
     @State private var showCompose=false
     @State private var replyTo:String?
     @State private var reportComment:Comment?
+    @State private var reportedIDs:Set<String>=[]
+    @State private var hiddenIDs:Set<String>=[]
+    @State private var reportingIDs:Set<String>=[]
+    @State private var reportSubmitted=false
     private var commentsEnabled:Bool {runtime.config?.features.comments == true && runtime.options.comments.isEnabled}
     var body:some View {
         List {
@@ -136,9 +140,12 @@ struct EngagementPill:ViewModifier {
         .sheet(isPresented:$showGuidelines,onDismiss:{if agreed {agreed=false;showCompose=true}}){guidelines}
         .sheet(isPresented:$showCompose){ComposeComment(runtime:runtime,version:release.version,parentId:replyTo,onSaved:{Task{await refresh()}})}
         .confirmationDialog(String(localized:"Report comment",bundle:.module),isPresented:Binding(get:{reportComment != nil},set:{if !$0{reportComment=nil}}),titleVisibility:.visible){
-            ForEach(["spam","abuse","hate","sexual","illegal","other"],id:\.self){reason in Button(reason.capitalized){if let id=reportComment?.id {Task{do{try await runtime.report(id:id,reason:reason)}catch{actionFailed=true};reportComment=nil}}}}
+            ForEach(["spam","abuse","hate","sexual","illegal","other"],id:\.self){reason in
+                Button(reason.capitalized){guard let comment=reportComment else{return};reportComment=nil;Task{await submitReport(comment,reason:reason)}}
+            }
             Button(String(localized:"Cancel",bundle:.module),role:.cancel){reportComment=nil}
         }
+        .alert(String(localized:"Report submitted",bundle:.module),isPresented:$reportSubmitted){Button("OK",role:.cancel){}} message:{Text("Thank you. Your report has been submitted.",bundle:.module)}
     }
     private var guidelines:some View {
         NavigationStack {
@@ -153,25 +160,50 @@ struct EngagementPill:ViewModifier {
         }.tint(.primary)
     }
     private func commentRow(_ comment:Comment)->some View {
-        VStack(alignment:.leading,spacing:8) {
+        let removed=comment.isRemoved || hiddenIDs.contains(comment.id)
+        return VStack(alignment:.leading,spacing:8) {
             HStack {
                 Text(comment.author.name ?? "User \(comment.author.tag ?? "")").font(.caption.bold())
                 if comment.author.isMe {Text("You",bundle:.module).font(.caption2).foregroundStyle(.secondary)}
                 if comment.author.kind=="developer" {Text("Developer",bundle:.module).font(.caption2).foregroundStyle(Color.indigo)}
+                Spacer()
+                if !removed && comment.status=="visible" {
+                    Menu {commentActions(comment)} label:{Image(systemName:"ellipsis").frame(minWidth:44,minHeight:44).contentShape(Rectangle())}
+                        .accessibilityLabel(Text("Comment actions",bundle:.module)).accessibilityIdentifier("releasekit.comment.menu.\(comment.id)")
+                }
             }
-            Text(comment.body).textSelection(.enabled)
-            if comment.author.verified == true {Label(String(localized:"Verified app",bundle:.module),systemImage:"checkmark.shield").font(.caption2).foregroundStyle(.secondary)}
-            if comment.status=="visible",runtime.config?.features.commentVotes == true {
-                VoteControl(runtime:runtime,type:"comment",id:comment.id,up:comment.upCount,down:comment.downCount,selected:comment.myVote,compact:true)
+            if removed {
+                Label {Text(verbatim:hiddenCommentNotice)} icon:{Image(systemName:"eye.slash")}
+                    .font(.callout).foregroundStyle(.secondary).accessibilityIdentifier("releasekit.comment.hidden.\(comment.id)")
+            } else {
+                Text(comment.body).textSelection(.enabled)
+                if comment.author.verified == true {Label(String(localized:"Verified app",bundle:.module),systemImage:"checkmark.shield").font(.caption2).foregroundStyle(.secondary)}
+                if comment.status=="visible",runtime.config?.features.commentVotes == true {
+                    VoteControl(runtime:runtime,type:"comment",id:comment.id,up:comment.upCount,down:comment.downCount,selected:comment.myVote,compact:true)
+                }
+                if comment.status=="pending" {Label(String(localized:"Awaiting review",bundle:.module),systemImage:"clock").font(.caption).foregroundStyle(.secondary)}
             }
-            if comment.status=="pending" {Label(String(localized:"Awaiting review",bundle:.module),systemImage:"clock").font(.caption).foregroundStyle(.secondary)}
         }.padding(.vertical,4).accessibilityElement(children:.contain).contextMenu {
-            if comment.status=="visible" {Button(String(localized:"Reply",bundle:.module)){replyTo=comment.id;startCompose()}}
-            if !comment.author.isMe {
-                Button(String(localized:"Report",bundle:.module)){reportComment=comment}
-                if comment.author.kind=="anon" {Button(String(localized:"Block user",bundle:.module),role:.destructive){Task{do{try await runtime.block(id:comment.id);await refresh()}catch{actionFailed=true}}}}
-            }
+            if !removed {commentActions(comment)}
         }
+    }
+    @ViewBuilder private func commentActions(_ comment:Comment)->some View {
+        if comment.status=="visible" {Button(String(localized:"Reply",bundle:.module)){replyTo=comment.id;startCompose()}}
+        if comment.status=="visible" && !comment.author.isMe {
+            Button {reportComment=comment} label:{Label(String(localized:"Report comment",bundle:.module),systemImage:"flag")}
+                .disabled(reportedIDs.contains(comment.id)||reportingIDs.contains(comment.id))
+                .accessibilityIdentifier("releasekit.comment.report.\(comment.id)")
+            if comment.author.kind=="anon" {Button(String(localized:"Block user",bundle:.module),role:.destructive){Task{do{try await runtime.block(id:comment.id);await refresh()}catch{actionFailed=true}}}}
+        }
+    }
+    private func submitReport(_ comment:Comment,reason:String) async {
+        guard !reportingIDs.contains(comment.id),!reportedIDs.contains(comment.id) else{return}
+        reportingIDs.insert(comment.id);actionFailed=false;defer{reportingIDs.remove(comment.id)}
+        do {
+            let result=try await runtime.report(id:comment.id,reason:reason,version:release.version)
+            if result.hidden==true {hiddenIDs.insert(comment.id)}
+            reportedIDs.insert(comment.id);await refresh();reportSubmitted=true
+        } catch {actionFailed=true}
     }
     private func startCompose(){actionFailed=false;if runtime.config?.me.guidelinesAccepted == true {showCompose=true}else{showGuidelines=true}}
     private func refresh() async {
