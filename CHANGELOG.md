@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-rc.7
+
+- Move Reply beside each comment’s votes, aligned to the trailing edge, including replies and own comments.
+- Add an icon to Block user and omit empty action menus on own comments.
+
 ## 1.0.0-rc.6
 
 - Submit a report directly from the comment menu without asking the user to choose a reason. Developer moderation still requires a written justification.

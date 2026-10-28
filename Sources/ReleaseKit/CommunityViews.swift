@@ -160,7 +160,7 @@ struct EngagementPill:ViewModifier {
                 if comment.author.isMe {Text("You",bundle:.module).font(.caption2).foregroundStyle(.secondary)}
                 if comment.author.kind=="developer" {Text("Developer",bundle:.module).font(.caption2).foregroundStyle(Color.indigo)}
                 Spacer()
-                if !removed && comment.status=="visible" {
+                if !removed && comment.status=="visible" && !comment.author.isMe {
                     Menu {commentActions(comment)} label:{Image(systemName:"ellipsis").frame(minWidth:44,minHeight:44).contentShape(Rectangle())}
                         .accessibilityLabel(Text("Comment actions",bundle:.module)).accessibilityIdentifier("releasekit.comment.menu.\(comment.id)")
                 }
@@ -171,22 +171,33 @@ struct EngagementPill:ViewModifier {
             } else {
                 Text(comment.body).textSelection(.enabled)
                 if comment.author.verified == true {Label(String(localized:"Verified app",bundle:.module),systemImage:"checkmark.shield").font(.caption2).foregroundStyle(.secondary)}
-                if comment.status=="visible",runtime.config?.features.commentVotes == true {
-                    VoteControl(runtime:runtime,type:"comment",id:comment.id,up:comment.upCount,down:comment.downCount,selected:comment.myVote,compact:true)
+                if comment.status=="visible" {
+                    HStack(alignment:.top,spacing:12) {
+                        if runtime.config?.features.commentVotes == true {
+                            VoteControl(runtime:runtime,type:"comment",id:comment.id,up:comment.upCount,down:comment.downCount,selected:comment.myVote,compact:true)
+                        }
+                        Spacer(minLength:0)
+                        Button {replyTo=comment.id;startCompose()} label:{
+                            Label(String(localized:"Reply",bundle:.module),systemImage:"arrowshape.turn.up.left")
+                                .font(.subheadline).frame(minWidth:44,minHeight:44).contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain).foregroundStyle(.indigo)
+                        .disabled(runtime.config?.me.banned == true)
+                        .accessibilityIdentifier("releasekit.comment.reply.\(comment.id)")
+                    }
                 }
                 if comment.status=="pending" {Label(String(localized:"Awaiting review",bundle:.module),systemImage:"clock").font(.caption).foregroundStyle(.secondary)}
             }
         }.padding(.vertical,4).accessibilityElement(children:.contain).contextMenu {
-            if !removed {commentActions(comment)}
+            if !removed && !comment.author.isMe {commentActions(comment)}
         }
     }
     @ViewBuilder private func commentActions(_ comment:Comment)->some View {
-        if comment.status=="visible" {Button(String(localized:"Reply",bundle:.module)){replyTo=comment.id;startCompose()}}
         if comment.status=="visible" && !comment.author.isMe {
             Button {Task{await submitReport(comment)}} label:{Label(String(localized:"Report comment",bundle:.module),systemImage:"flag")}
                 .disabled(reportedIDs.contains(comment.id)||reportingIDs.contains(comment.id))
                 .accessibilityIdentifier("releasekit.comment.report.\(comment.id)")
-            if comment.author.kind=="anon" {Button(String(localized:"Block user",bundle:.module),role:.destructive){Task{do{try await runtime.block(id:comment.id);await refresh()}catch{actionFailed=true}}}}
+            if comment.author.kind=="anon" {Button(role:.destructive){Task{do{try await runtime.block(id:comment.id);await refresh()}catch{actionFailed=true}}} label:{Label(String(localized:"Block user",bundle:.module),systemImage:"person.crop.circle.badge.xmark")}}
         }
     }
     private func submitReport(_ comment:Comment) async {
