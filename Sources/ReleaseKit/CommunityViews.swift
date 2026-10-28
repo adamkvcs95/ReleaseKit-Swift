@@ -119,6 +119,9 @@ private struct CommentThreadRow:Identifiable {
     @State private var agreed=false
     @State private var composition:CommentComposition?
     @State private var pendingComposition:CommentComposition?
+    @State private var deleteTarget:Comment?
+    @State private var deletingIDs:Set<String>=[]
+    @State private var deletedIDs:Set<String>=[]
     @State private var reportedIDs:Set<String>=[]
     @State private var hiddenIDs:Set<String>=[]
     @State private var reportingIDs:Set<String>=[]
@@ -179,6 +182,10 @@ private struct CommentThreadRow:Identifiable {
         .task{await refresh()}.refreshable{await refresh()}
         .sheet(isPresented:$showGuidelines,onDismiss:{if agreed {agreed=false;composition=pendingComposition};pendingComposition=nil}){guidelines}
         .sheet(item:$composition){request in ComposeComment(runtime:runtime,version:release.version,request:request,onSaved:{Task{await refresh()}})}
+        .confirmationDialog(String(localized:"Delete comment?",bundle:.module),isPresented:Binding(get:{deleteTarget != nil},set:{if !$0{deleteTarget=nil}}),titleVisibility:.visible){
+            Button(String(localized:"Delete comment",bundle:.module),role:.destructive){guard let target=deleteTarget else{return};deleteTarget=nil;Task{await submitDelete(target)}}
+            Button(String(localized:"Cancel",bundle:.module),role:.cancel){deleteTarget=nil}
+        } message:{Text("Your comment text will be deleted. Replies will remain.",bundle:.module)}
         .alert(String(localized:"Report submitted",bundle:.module),isPresented:$reportSubmitted){Button("OK",role:.cancel){}} message:{Text("Thank you. Your report has been submitted.",bundle:.module)}
     }
     private var guidelines:some View {
@@ -194,19 +201,23 @@ private struct CommentThreadRow:Identifiable {
         }.tint(.primary)
     }
     private func commentRow(_ comment:Comment,depth:Int=0,separatorDepth:Int=0)->some View {
-        let removed=comment.isRemoved || hiddenIDs.contains(comment.id)
+        let deleted=comment.deletedByAuthor==true || deletedIDs.contains(comment.id)
+        let removed=comment.isRemoved || hiddenIDs.contains(comment.id) || deleted
         return VStack(alignment:.leading,spacing:8) {
             HStack {
                 Text(comment.author.name ?? "User \(comment.author.tag ?? "")").font(.caption.bold())
                 if comment.author.isMe {Text("You",bundle:.module).font(.caption2).foregroundStyle(.secondary)}
                 if comment.author.kind=="developer" {Text("Developer",bundle:.module).font(.caption2).foregroundStyle(Color.indigo)}
                 Spacer()
-                if !removed && comment.status=="visible" && !comment.author.isMe {
+                if (comment.author.isMe && !deleted) || (!removed && comment.status=="visible" && !comment.author.isMe) {
                     Menu {commentActions(comment)} label:{Image(systemName:"ellipsis").frame(minWidth:44,minHeight:44).contentShape(Rectangle())}
                         .accessibilityLabel(Text("Comment actions",bundle:.module)).accessibilityIdentifier("releasekit.comment.menu.\(comment.id)")
                 }
             }
-            if removed {
+            if deleted {
+                Label(String(localized:"This comment was deleted.",bundle:.module),systemImage:"trash")
+                    .font(.callout).foregroundStyle(.secondary).accessibilityIdentifier("releasekit.comment.deleted.\(comment.id)")
+            } else if removed {
                 Label {Text(verbatim:hiddenCommentNotice)} icon:{Image(systemName:"eye.slash")}
                     .font(.callout).foregroundStyle(.secondary).accessibilityIdentifier("releasekit.comment.hidden.\(comment.id)")
             } else {
@@ -233,16 +244,25 @@ private struct CommentThreadRow:Identifiable {
         .padding(.vertical,12)
         .modifier(CommentThreadGuides(depth:depth,separatorDepth:separatorDepth))
         .accessibilityElement(children:.contain).contextMenu {
-            if !removed && !comment.author.isMe {commentActions(comment)}
+            if (comment.author.isMe && !deleted) || (!removed && !comment.author.isMe) {commentActions(comment)}
         }
     }
     @ViewBuilder private func commentActions(_ comment:Comment)->some View {
+        if comment.author.isMe && comment.deletedByAuthor != true && !deletedIDs.contains(comment.id) {
+            Button(role:.destructive){deleteTarget=comment} label:{Label(String(localized:"Delete comment",bundle:.module),systemImage:"trash")}
+                .disabled(deletingIDs.contains(comment.id)).accessibilityIdentifier("releasekit.comment.delete.\(comment.id)")
+        }
         if comment.status=="visible" && !comment.author.isMe {
             Button {Task{await submitReport(comment)}} label:{Label(String(localized:"Report comment",bundle:.module),systemImage:"flag")}
                 .disabled(reportedIDs.contains(comment.id)||reportingIDs.contains(comment.id))
                 .accessibilityIdentifier("releasekit.comment.report.\(comment.id)")
             if comment.author.kind=="anon" {Button(role:.destructive){Task{do{try await runtime.block(id:comment.id);await refresh()}catch{actionFailed=true}}} label:{Label(String(localized:"Block user",bundle:.module),systemImage:"person.crop.circle.badge.xmark")}}
         }
+    }
+    private func submitDelete(_ comment:Comment) async {
+        guard !deletingIDs.contains(comment.id),!deletedIDs.contains(comment.id) else{return}
+        deletingIDs.insert(comment.id);actionFailed=false;defer{deletingIDs.remove(comment.id)}
+        do{try await runtime.deleteComment(id:comment.id,version:release.version);deletedIDs.insert(comment.id);await refresh()}catch{actionFailed=true}
     }
     private func submitReport(_ comment:Comment) async {
         guard !reportingIDs.contains(comment.id),!reportedIDs.contains(comment.id) else{return}

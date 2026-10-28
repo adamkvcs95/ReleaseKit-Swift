@@ -2,6 +2,8 @@
 
 ## 1.0.0-rc.10
 
+- Delete your own comments from the ellipsis menu with confirmation. Preserve replies and show a neutral deletion notice, invalidate cached discussions and update counts.
+
 - Show comment threads newest-first by their parent comment date; keep nested replies under their parent and sibling replies newest-first.
 
 - Connect native comment thread guides across adjacent reply rows and Load more replies rows. Keep content padding inside the full-height guides and inset each horizontal separator by the deeper of its two adjacent rows, including the boundary above the first reply.

@@ -17,8 +17,8 @@ The host Mac currently has no valid code-signing identities. The owner has not s
 
 ## Local verification, 2026-10-28
 
-- 107 backend/core tests pass, including the official Apple certificate vector at its documented valid date, real ECDSA assertion signatures, nonce reuse rejection and independent comment-vote gates.
-- 28 Swift tests pass, including shared signing contracts, ETag 304, disk isolation/expiry, offline fallback, HTTP denial eviction, no queued user writes and the bounded event queue.
+- 111 backend/core tests pass, including the official Apple certificate vector at its documented valid date, real ECDSA assertion signatures, nonce reuse rejection and independent comment-vote gates.
+- 30 Swift tests pass, including shared signing contracts, ETag 304, disk isolation/expiry, offline fallback, HTTP denial eviction, no queued user writes and the bounded event queue.
 - iOS library/demo compile with Swift 6.
 - Simulator: 3.9 first launch recorded without an update sheet; 4.0 presented automatically once; next launch skipped. Offline release history/comments and vote rollback verified through Device Hub.
 - Required-reason API review: no UserDefaults, file timestamps, disk capacity or system boot-time APIs added.

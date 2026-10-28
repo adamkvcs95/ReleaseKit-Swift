@@ -26,7 +26,8 @@ private final class SDKProtocol:URLProtocol,@unchecked Sendable {
             var status=200;let payload:Any
             if request.value(forHTTPHeaderField:"X-RK-App-Key") != "rk_pub_0123456789ABCDEFGHIJKLMN" || request.value(forHTTPHeaderField:"X-RK-Anon-Id") != "a2e6885b-9e93-4308-a632-81d8effd08bd" {
                 status=401;payload=["error":["code":"invalid_app_key","message":"Invalid headers"]]
-            } else if request.url!.path.hasSuffix("/config") {payload=fixture["config"]!}
+            } else if request.httpMethod=="DELETE" {guard request.url!.path.hasSuffix("/comments/c1") else{throw URLError(.badURL)};let fixture=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"delete-comment",withExtension:"json")!)) as! [String:Any];payload=fixture["response"]!}
+            else if request.url!.path.hasSuffix("/config") {payload=fixture["config"]!}
             else if request.url!.path.hasSuffix("/reports") {let report=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"report-hidden",withExtension:"json")!)) as! [String:Any];payload=report["response"]!}
             else if request.url!.path.hasSuffix("/replies") {guard URLComponents(url:request.url!,resolvingAgainstBaseURL:false)?.queryItems?.contains(URLQueryItem(name:"sort",value:"new"))==true else{throw URLError(.badURL)};let nested=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"nested-comments",withExtension:"json")!)) as! [String:Any];let page=nested["page"] as! [String:Any];let root=(page["items"] as! [[String:Any]])[0];payload=["items":root["replies"]!,"nextCursor":NSNull()]}
             else if request.url!.path.hasSuffix("/events") {payload=[String:String]()}
@@ -99,6 +100,10 @@ final class APIClientTests:XCTestCase {
     func testLoadsRepliesWithNestedChildren() async throws {
         let page=try await client().replies(commentId:"c1")
         XCTAssertEqual(page.items.first?.id,"c2");XCTAssertEqual(page.items.first?.replies.first?.id,"c3");XCTAssertNil(page.nextCursor)
+    }
+    func testDeletesOwnCommentAndReceivesUpdatedCount() async throws {
+        let result=try await client().deleteComment(id:"c1")
+        XCTAssertTrue(result.deleted);XCTAssertEqual(result.id,"c1");XCTAssertEqual(result.releaseCommentCount,1)
     }
     func testReportReturnsHiddenStatusAndAuthoritativeCount() async throws {
         let result=try await client().report(commentId:"c1")

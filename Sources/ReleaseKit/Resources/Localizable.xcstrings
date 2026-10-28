@@ -1024,6 +1024,70 @@
           }
         }
       }
+    },
+    "Delete comment": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete comment"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Komment törlése"
+          }
+        }
+      }
+    },
+    "Delete comment?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete comment?"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Törlöd a kommentet?"
+          }
+        }
+      }
+    },
+    "Your comment text will be deleted. Replies will remain.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your comment text will be deleted. Replies will remain."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A komment szövege törlődik. A válaszok megmaradnak."
+          }
+        }
+      }
+    },
+    "This comment was deleted.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This comment was deleted."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ezt a kommentet törölték."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

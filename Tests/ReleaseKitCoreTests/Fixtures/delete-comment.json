@@ -1,0 +1,67 @@
+{
+  "request": {
+    "method": "DELETE",
+    "path": "/api/v1/sdk/comments/c1"
+  },
+  "response": {
+    "deleted": true,
+    "id": "c1",
+    "releaseCommentCount": 1
+  },
+  "comment": {
+    "id": "c1",
+    "body": "This comment was deleted.",
+    "status": "deleted",
+    "removed": false,
+    "deletedByAuthor": true
+  },
+  "page": {
+    "items": [
+      {
+        "id": "c1",
+        "author": {
+          "kind": "anon",
+          "name": "Root Writer",
+          "tag": "AB12",
+          "verified": false,
+          "isMe": false
+        },
+        "body": "This comment was deleted.",
+        "createdAt": "2026-10-28T10:00:00Z",
+        "upCount": 0,
+        "downCount": 0,
+        "myVote": 0,
+        "status": "deleted",
+        "removed": false,
+        "replies": [
+          {
+            "id": "c2",
+            "author": {
+              "kind": "anon",
+              "name": "Root Writer",
+              "tag": "AB12",
+              "verified": false,
+              "isMe": false
+            },
+            "body": "Reply remains",
+            "createdAt": "2026-10-28T10:00:00Z",
+            "upCount": 0,
+            "downCount": 0,
+            "myVote": 0,
+            "status": "visible",
+            "removed": false,
+            "replies": [],
+            "replyCount": 0,
+            "hasMoreReplies": false,
+            "repliesNextCursor": null
+          }
+        ],
+        "replyCount": 1,
+        "hasMoreReplies": false,
+        "repliesNextCursor": null,
+        "deletedByAuthor": true
+      }
+    ],
+    "nextCursor": null
+  }
+}

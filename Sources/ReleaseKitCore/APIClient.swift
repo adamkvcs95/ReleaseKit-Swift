@@ -26,14 +26,14 @@ package actor APIClient {
         self.baseURL=baseURL;self.appKey=appKey;self.anonID=anonID;self.session=session;self.authorizer=authorizer
         self.cache=cacheDirectory.map{ResponseCache(directory:$0,scope:"\(baseURL.absoluteString)|\(appKey)|\(anonID)")}
     }
-    private func request<T:Decodable & Sendable>(_ path:String,query:[URLQueryItem]=[],body:Data?=nil,force:Bool=false) async throws -> T {
+    private func request<T:Decodable & Sendable>(_ path:String,query:[URLQueryItem]=[],body:Data?=nil,method:String="POST",force:Bool=false) async throws -> T {
         if body != nil {await lockWrite()}
         defer{if body != nil {unlockWrite()}}
         guard var components=URLComponents(url:baseURL.appendingPathComponent(path),resolvingAgainstBaseURL:false) else {throw ReleaseKitNetworkError.invalidURL}
         if !query.isEmpty {components.queryItems=query}
         guard let url=components.url else {throw ReleaseKitNetworkError.invalidURL}
         var request=URLRequest(url:url,timeoutInterval:10)
-        if let body {request.httpMethod="POST";request.httpBody=body;request.setValue("application/json",forHTTPHeaderField:"Content-Type")}
+        if let body {request.httpMethod=method;request.httpBody=body;request.setValue("application/json",forHTTPHeaderField:"Content-Type")}
         request.setValue(appKey,forHTTPHeaderField:"X-RK-App-Key");request.setValue(anonID,forHTTPHeaderField:"X-RK-Anon-Id");request.setValue("ios/1.0.0-rc.10",forHTTPHeaderField:"X-RK-SDK")
         request.setValue(Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "",forHTTPHeaderField:"X-RK-App-Version")
         request.setValue(Locale.preferredLanguages.prefix(3).joined(separator:", "),forHTTPHeaderField:"Accept-Language")
@@ -102,6 +102,7 @@ package actor APIClient {
     package func acceptGuidelines() async throws {let _:Accepted=try await post("api/v1/sdk/guidelines/accept",Empty())}
     package func addComment(version:String,body:String,parentId:String?=nil) async throws -> Comment {try await post("api/v1/sdk/releases/\(version)/comments",Content(body:body,parentId:parentId,locale:Locale.current.identifier))}
     package func report(commentId:String) async throws -> Reported {try await post("api/v1/sdk/reports",Report(targetId:commentId))}
+    package func deleteComment(id:String) async throws -> DeletedComment {try await request("api/v1/sdk/comments/\(id)",body:Data("{}".utf8),method:"DELETE")}
     package func block(commentId:String) async throws {let _:Blocked=try await post("api/v1/sdk/blocks",Block(commentId:commentId))}
     private func queuedEvents()->[Event]{guard let data=cache?.read("__events")?.data else{return []};return (try? JSONDecoder().decode([Event].self,from:data)) ?? []}
     private func flushEvents() async {

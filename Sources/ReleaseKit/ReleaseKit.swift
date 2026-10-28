@@ -99,6 +99,7 @@ private enum KeychainIdentity {
     func replies(id:String,cursor:String?=nil) async throws -> CommentPage {try await client.replies(commentId:id,cursor:cursor)}
     func addComment(version:String,body:String,parentId:String?=nil) async throws {let comment=try await client.addComment(version:version,body:body,parentId:parentId);if let count=comment.releaseCommentCount {commentCounts[version]=count}}
     func report(id:String,version:String) async throws -> Reported {let result=try await client.report(commentId:id);if let count=result.releaseCommentCount {commentCounts[version]=count};return result}
+    func deleteComment(id:String,version:String) async throws {let result=try await client.deleteComment(id:id);if let count=result.releaseCommentCount {commentCounts[version]=count}}
     func block(id:String) async throws {try await client.block(commentId:id)}
     func prepareWhatsNew() async -> Release? {
         guard options.whatsNew.isEnabled,!fetching,!presenting,let version=Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String else{return nil}

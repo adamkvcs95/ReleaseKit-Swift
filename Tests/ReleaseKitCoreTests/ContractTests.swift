@@ -16,6 +16,12 @@ final class ContractTests:XCTestCase {
         XCTAssertEqual(fixture.response.items.map(\.id),fixture.rootOrder)
         XCTAssertEqual(fixture.response.items[1].replies.map(\.id),fixture.replyOrder)
     }
+    func testDeletedCommentKeepsItsReplyAndUsesADeletionNotice() throws {
+        struct Fixture:Decodable {let response:DeletedComment;let page:CommentPage}
+        let fixture=try JSONDecoder().decode(Fixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"delete-comment",withExtension:"json")!))
+        let comment=try XCTUnwrap(fixture.page.items.first);XCTAssertTrue(fixture.response.deleted);XCTAssertEqual(comment.deletedByAuthor,true);XCTAssertEqual(comment.removed,false)
+        XCTAssertEqual(comment.body,"This comment was deleted.");XCTAssertEqual(comment.replies.first?.body,"Reply remains")
+    }
     func testReportedCommentIsRedactedAndCountIsReturned() throws {
         struct Fixture:Decodable {let response:Reported;let page:CommentPage}
         let fixture=try JSONDecoder().decode(Fixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"report-hidden",withExtension:"json")!))
