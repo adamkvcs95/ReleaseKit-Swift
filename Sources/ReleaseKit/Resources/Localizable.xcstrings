@@ -864,6 +864,22 @@
           }
         }
       }
+    },
+    "Your comment will appear publicly after posting.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your comment will appear publicly after posting."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A hozzászólásod elküldés után nyilvánosan megjelenik."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

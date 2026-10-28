@@ -41,7 +41,7 @@ Voting is available when the server advertises `features.votes=true`. The releas
 
 `RK_ENABLE_SDK_COMMENTS=true` on the server and the app’s Comments setting enable native posting, guidelines acceptance, reporting and blocking. `Options.comments.isEnabled` defaults to true; set it to false to hide commenting in the host app. The demo enables it. This gate does not enable comment voting or browser writes.
 
-Before the first post, the user accepts the community guidelines. The server assigns a stable random-style pseudonym (e.g. Sunny Otter AB12) scoped to the app and anonymous installation; the name is shown in the composer and on comments without exposing the installation ID. All new comments are pending developer review, visible immediately to their author and publicly only after approval. The composer preserves text on errors. Comments paginate in the detail view; long-press a visible comment for reply/report/block actions. The SDK retains the existing preview limit of three inline replies per thread.
+Before the first post, the user accepts the community guidelines. The server assigns a stable random-style pseudonym (e.g. Sunny Otter AB12) scoped to the app and anonymous installation; the name is shown in the composer and on comments without exposing the installation ID. New comments appear automatically without developer approval. Content rejection, bans, reports and blocking remain enforced. The preview displays the server comment count and updates it after posting. Release cards are spaced 10 points apart. The composer preserves text on errors. Comments paginate in the detail view; long-press a visible comment for reply/report/block actions. The SDK retains the existing preview limit of three inline replies per thread.
 
 ## Demo
 

@@ -66,6 +66,7 @@ private enum KeychainIdentity {
     private var fetching=false
     var config:AppConfig?
     var voteStates:[String:VoteState]=[:]
+    var commentCounts:[String:Int]=[:]
     var installedVersion:String? {Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String}
     init(appKey:String,identity:String,options:ReleaseKit.Options) {
         self.options=options;client=APIClient(baseURL:options.baseURL,appKey:appKey,anonID:identity);state=Self.loadState()
@@ -79,13 +80,13 @@ private enum KeychainIdentity {
     func changelog(cursor:String?=nil) async throws->ReleasesResponse {
         if cursor == nil {config=try await client.config()}
         let page=try await client.releases(cursor:cursor)
-        for release in page.items {voteStates["release:\(release.id)"]=VoteState(up:release.upCount,down:release.downCount,selected:release.myVote)}
+        for release in page.items {commentCounts[release.version]=release.commentCount;voteStates["release:\(release.id)"]=VoteState(up:release.upCount,down:release.downCount,selected:release.myVote)}
         return page
     }
     func vote(type:String,id:String,value:Int) async throws -> VoteResult {try await client.vote(targetType:type,targetId:id,value:value)}
     func comments(version:String,cursor:String?=nil) async throws -> CommentPage {try await client.comments(version:version,cursor:cursor)}
     func acceptGuidelines() async throws {try await client.acceptGuidelines();await loadConfig()}
-    func addComment(version:String,body:String,parentId:String?=nil) async throws {let _=try await client.addComment(version:version,body:body,parentId:parentId)}
+    func addComment(version:String,body:String,parentId:String?=nil) async throws {let comment=try await client.addComment(version:version,body:body,parentId:parentId);if let count=comment.releaseCommentCount {commentCounts[version]=count}}
     func report(id:String,reason:String) async throws {try await client.report(commentId:id,reason:reason)}
     func block(id:String) async throws {try await client.block(commentId:id)}
     func prepareWhatsNew() async -> Release? {
@@ -143,7 +144,7 @@ private struct WhatsNewSheet:View {
                 } actions:{Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}
             } else if let runtime=ReleaseKit.runtime {
                 ScrollView {
-                    LazyVStack(alignment:.leading,spacing:18) {
+                    LazyVStack(alignment:.leading,spacing:10) {
                         if let config=runtime.config {
                             HStack(spacing:12) {
                                 if let icon=config.app.iconUrl {AsyncImage(url:icon){image in image.resizable().scaledToFill()}placeholder:{Color.secondary.opacity(0.1)}.frame(width:48,height:48).clipShape(RoundedRectangle(cornerRadius:12)).accessibilityHidden(true)}
@@ -166,9 +167,18 @@ private struct WhatsNewSheet:View {
                                             .font(.subheadline).foregroundStyle(.secondary).lineLimit(3).multilineTextAlignment(.leading).frame(maxWidth:.infinity,alignment:.leading)
                                     }.contentShape(Rectangle())
                                 }.buttonStyle(.plain).accessibilityIdentifier("releasekit.release.\(release.id)")
-                                if runtime.config?.features.votes == true {
-                                    VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote,compact:true)
-                                        .id("\(release.id)-\(release.upCount)-\(release.downCount)-\(release.myVote)")
+                                HStack {
+                                    if runtime.config?.features.votes == true {
+                                        VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote,compact:true)
+                                            .id("\(release.id)-\(release.upCount)-\(release.downCount)-\(release.myVote)")
+                                    }
+                                    Spacer()
+                                    NavigationLink {ReleaseDetailView(release:release,runtime:runtime)} label:{
+                                        Label("\(runtime.commentCounts[release.version] ?? release.commentCount)",systemImage:"bubble.right")
+                                            .font(.caption).monospacedDigit().foregroundStyle(.secondary).frame(minHeight:44)
+                                    }.buttonStyle(.plain).accessibilityLabel(Text("Comments",bundle:.module))
+                                        .accessibilityValue(String(runtime.commentCounts[release.version] ?? release.commentCount))
+                                        .accessibilityIdentifier("releasekit.comments.count.\(release.id)")
                                 }
                             }
                             .padding(20).frame(maxWidth:.infinity,alignment:.leading)

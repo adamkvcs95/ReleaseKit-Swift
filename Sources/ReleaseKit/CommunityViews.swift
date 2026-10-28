@@ -162,7 +162,7 @@ import ReleaseKitCore
                     if let name=runtime.config?.me.displayName {LabeledContent(String(localized:"Posting as",bundle:.module),value:name)}
                     TextEditor(text:$text).frame(minHeight:140).accessibilityLabel(Text("Comment",bundle:.module)).accessibilityIdentifier("releasekit.comment.body")
                     Text("\(text.count)/1000").font(.caption).foregroundStyle(.secondary)
-                } footer:{Text("Your comment will appear publicly after developer review.",bundle:.module)}
+                } footer:{Text("Your comment will appear publicly after posting.",bundle:.module)}
                 if let error {Section {Text(error).foregroundStyle(.red).accessibilityIdentifier("releasekit.comment.error")}}
             }
             .navigationTitle(String(localized:"Add comment",bundle:.module)).navigationBarTitleDisplayMode(.inline)

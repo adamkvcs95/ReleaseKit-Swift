@@ -16,8 +16,9 @@
     "upCount": 0,
     "downCount": 0,
     "myVote": 0,
-    "status": "pending",
+    "status": "visible",
     "replies": [],
-    "replyCount": 0
+    "replyCount": 0,
+    "releaseCommentCount": 1
   }
 }

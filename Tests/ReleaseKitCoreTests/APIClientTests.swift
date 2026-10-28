@@ -48,10 +48,10 @@ final class APIClientTests:XCTestCase {
         let result=try await client().vote(targetType:"release",targetId:"rel1",value:1)
         XCTAssertEqual(result.upCount,1);XCTAssertEqual(result.myVote,1)
     }
-    func testAcceptsGuidelinesPostsAndReloadsNamedPendingComments() async throws {
+    func testAcceptsGuidelinesPostsAndReloadsNamedVisibleComments() async throws {
         let api=client();try await api.acceptGuidelines()
         let posted=try await api.addComment(version:"4.0",body:"Thanks for the useful update!")
-        XCTAssertEqual(posted.status,"pending");XCTAssertEqual(posted.author.name,"Sunny Otter AB12")
+        XCTAssertEqual(posted.status,"visible");XCTAssertEqual(posted.releaseCommentCount,1);XCTAssertEqual(posted.author.name,"Sunny Otter AB12")
         let page=try await api.comments(version:"4.0");XCTAssertEqual(page.items.first?.id,posted.id)
         let next=try await api.comments(version:"4.0",cursor:page.nextCursor);XCTAssertTrue(next.items.isEmpty)
     }
