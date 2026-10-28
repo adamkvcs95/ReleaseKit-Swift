@@ -3,6 +3,18 @@ import XCTest
 @testable import ReleaseKitCore
 
 final class ContractTests:XCTestCase {
+    func testSharedAttestationCanonicalRequestAndCommentVote() throws {
+        struct Fixture:Decodable {
+            struct Request:Decodable {let method:String;let path:String;let bodySHA256:String;let timestamp:String;let challenge:String}
+            let request:Request;let canonicalPayload:String;let configFeatures:AppConfig.Features
+        }
+        let fixture=try JSONDecoder().decode(Fixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"attestation",withExtension:"json")!))
+        let r=fixture.request;XCTAssertEqual(AttestationPayload.canonical(method:r.method,path:r.path,bodySHA256:r.bodySHA256,timestamp:r.timestamp,challenge:r.challenge),fixture.canonicalPayload)
+        XCTAssertEqual(fixture.configFeatures.commentVotes,true);XCTAssertEqual(fixture.configFeatures.attestation,"optional")
+        struct VoteFixture:Decodable {let response:VoteResult}
+        let vote=try JSONDecoder().decode(VoteFixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"comment-vote",withExtension:"json")!)).response
+        XCTAssertEqual(vote.targetType,"comment");XCTAssertEqual(vote.myVote,1)
+    }
     func testDecodesNamedVisibleComment() throws {
         struct Fixture:Decodable {let response:Comment}
         let data=try Data(contentsOf:Bundle.module.url(forResource:"comments",withExtension:"json")!)

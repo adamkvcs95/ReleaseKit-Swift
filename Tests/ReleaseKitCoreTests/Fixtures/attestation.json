@@ -1,0 +1,26 @@
+{
+  "challengeResponse": {
+    "challenge": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "expiresAt": "2026-10-28T06:45:00Z"
+  },
+  "registerResponse": {
+    "registered": true
+  },
+  "request": {
+    "method": "POST",
+    "path": "/api/v1/sdk/votes",
+    "body": "{\"targetType\":\"comment\",\"targetId\":\"c1\",\"value\":1}",
+    "timestamp": "1793160000",
+    "challenge": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "bodySHA256": "47ddd7a1bd1a9ed8eebabb24efc98ccee34b3a44724d9534fab73778e4c3507f"
+  },
+  "canonicalPayload": "POST\n/api/v1/sdk/votes\n47ddd7a1bd1a9ed8eebabb24efc98ccee34b3a44724d9534fab73778e4c3507f\n1793160000\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "clientDataHashHex": "5b341f97bb5c4cd8d672ed37c48ee7e335d9ee921035840f9e43ae3aaa5852f4",
+  "configFeatures": {
+    "comments": true,
+    "votes": true,
+    "commentVotes": true,
+    "ideas": false,
+    "attestation": "optional"
+  }
+}

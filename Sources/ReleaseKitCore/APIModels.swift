@@ -3,7 +3,7 @@ import Foundation
 package struct AppConfig: Decodable, Sendable {
     package struct App: Decodable, Sendable { package let id:String; package let slug:String; package let name:String; package let iconUrl:URL?; package let latestVersion:String?; package let changelogUrl:URL; package let ideasUrl:URL? }
     package struct Developer: Decodable, Sendable { package let name:String; package let contactEmail:String; package let contactUrl:URL? }
-    package struct Features: Decodable, Sendable { package let comments:Bool; package let votes:Bool; package let ideas:Bool; package let attestation:String }
+    package struct Features: Decodable, Sendable { package let comments:Bool; package let votes:Bool; package let commentVotes:Bool?; package let ideas:Bool; package let attestation:String }
     package struct Branding: Decodable, Sendable { package let showPoweredBy:Bool }
     package struct Legal: Decodable, Sendable { package let guidelinesUrl:URL; package let termsUrl:URL; package let privacyUrl:URL }
     package struct Me: Decodable, Sendable { package let displayName:String?; package let guidelinesAccepted:Bool; package let banned:Bool; package let verified:Bool }

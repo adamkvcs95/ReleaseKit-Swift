@@ -896,6 +896,54 @@
           }
         }
       }
+    },
+    "Offline — showing saved updates": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline — showing saved updates"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline — mentett frissítések"
+          }
+        }
+      }
+    },
+    "Offline — showing saved comments": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline — showing saved comments"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline — mentett hozzászólások"
+          }
+        }
+      }
+    },
+    "Verified app": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verified app"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hitelesített app"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

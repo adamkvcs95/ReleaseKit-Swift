@@ -79,6 +79,7 @@ import ReleaseKitCore
             }
             Section(String(localized:"Comments",bundle:.module)) {
                 if commentsEnabled {
+                    if runtime.offline {Label(String(localized:"Offline — showing saved comments",bundle:.module),systemImage:"wifi.slash").font(.caption).foregroundStyle(.secondary)}
                     if loading {ProgressView(String(localized:"Loading comments…",bundle:.module))}
                     if failed {Text("Could not load comments.",bundle:.module).foregroundStyle(.secondary);Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}
                     if comments.isEmpty && !failed && !loading {Text("No comments yet.",bundle:.module).foregroundStyle(.secondary)}
@@ -142,6 +143,10 @@ import ReleaseKitCore
                 if comment.author.kind=="developer" {Text("Developer",bundle:.module).font(.caption2).foregroundStyle(.tint)}
             }
             Text(comment.body).textSelection(.enabled)
+            if comment.author.verified == true {Label(String(localized:"Verified app",bundle:.module),systemImage:"checkmark.shield").font(.caption2).foregroundStyle(.secondary)}
+            if comment.status=="visible",runtime.config?.features.commentVotes == true {
+                VoteControl(runtime:runtime,type:"comment",id:comment.id,up:comment.upCount,down:comment.downCount,selected:comment.myVote,compact:true)
+            }
             if comment.status=="pending" {Label(String(localized:"Awaiting review",bundle:.module),systemImage:"clock").font(.caption).foregroundStyle(.secondary)}
         }.padding(.vertical,4).accessibilityElement(children:.contain).contextMenu {
             if comment.status=="visible" {Button(String(localized:"Reply",bundle:.module)){replyTo=comment.id;startCompose()}}

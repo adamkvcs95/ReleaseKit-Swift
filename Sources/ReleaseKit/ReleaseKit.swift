@@ -3,6 +3,7 @@ import Foundation
 import SwiftUI
 import UIKit
 import Security
+import CryptoKit
 import Observation
 import OSLog
 import ReleaseKitCore
@@ -34,9 +35,9 @@ import ReleaseKitCore
     }
     public static func presentWhatsNewIfNeeded() async {
         guard let runtime,let release=await runtime.prepareWhatsNew() else {return}
-        guard let scene=UIApplication.shared.connectedScenes.compactMap({$0 as? UIWindowScene}).first(where:{$0.activationState == .foregroundActive}),let window=scene.windows.first(where:{$0.isKeyWindow}),let root=window.rootViewController else {return}
+        guard let scene=UIApplication.shared.connectedScenes.compactMap({$0 as? UIWindowScene}).first(where:{$0.activationState == .foregroundActive}),let window=scene.windows.first(where:{$0.isKeyWindow}),let root=window.rootViewController else {runtime.releasePresentation();return}
         var top=root;while let presented=top.presentedViewController {top=presented}
-        guard !(top is UIAlertController) else {return}
+        guard !(top is UIAlertController) else {runtime.releasePresentation();return}
         let controller=UIHostingController(rootView:WhatsNewSheet(release:release,runtime:runtime,onPresent:{runtime.markPresented(release.version)}))
         if let sheet=controller.sheetPresentationController {sheet.detents=[.medium(),.large()];sheet.prefersGrabberVisible=true}
         top.present(controller,animated:true)
@@ -64,37 +65,46 @@ private enum KeychainIdentity {
     private let client:APIClient
     private var state:LocalState
     private var fetching=false
+    private var presenting=false
+    private let stateURL:URL?
     var config:AppConfig?
+    var offline=false
     var voteStates:[String:VoteState]=[:]
     var commentCounts:[String:Int]=[:]
     var installedVersion:String? {Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String}
     init(appKey:String,identity:String,options:ReleaseKit.Options) {
-        self.options=options;client=APIClient(baseURL:options.baseURL,appKey:appKey,anonID:identity);state=Self.loadState()
+        self.options=options
+        let cacheDirectory=FileManager.default.urls(for:.cachesDirectory,in:.userDomainMask).first?.appendingPathComponent("ReleaseKit")
+        let authorizer:(any RequestAuthorizer)?=options.appAttest == .automatic ? AppAttestProvider(baseURL:options.baseURL,appKey:appKey,identity:identity):nil
+        client=APIClient(baseURL:options.baseURL,appKey:appKey,anonID:identity,cacheDirectory:cacheDirectory,authorizer:authorizer)
+        let scope=SHA256.hash(data:Data("\(options.baseURL.absoluteString)|\(appKey)|\(identity)".utf8)).map{String(format:"%02x",$0)}.joined()
+        stateURL=FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask).first?.appendingPathComponent("ReleaseKit/state-\(scope).json")
+        state=Self.loadState(url:stateURL)
     }
-    private static var stateURL:URL? {FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask).first?.appending(path:"ReleaseKit/state.json")}
-    private static func loadState()->LocalState {guard let url=stateURL,let data=try? Data(contentsOf:url),let value=try? JSONDecoder().decode(LocalState.self,from:data) else{return LocalState()};return value}
-    private func save(){guard let url=Self.stateURL,let data=try? JSONEncoder().encode(state) else{return};do{try FileManager.default.createDirectory(at:url.deletingLastPathComponent(),withIntermediateDirectories:true);try data.write(to:url,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])}catch{}}
-    func reset(){state=LocalState();save()}
-    func loadConfig() async {do {config=try await client.config()} catch {if options.logLevel != .off {Logger(subsystem:"it.releasek.sdk",category:"network").warning("Unable to load configuration.")}}}
+    private static func loadState(url:URL?)->LocalState {guard let url,let data=try? Data(contentsOf:url),let value=try? JSONDecoder().decode(LocalState.self,from:data) else{return LocalState()};return value}
+    private func save(){guard let url=stateURL,let data=try? JSONEncoder().encode(state) else{return};do{try FileManager.default.createDirectory(at:url.deletingLastPathComponent(),withIntermediateDirectories:true);try data.write(to:url,options:[.atomic,.completeFileProtectionUntilFirstUserAuthentication])}catch{}}
+    func reset(){state=LocalState();presenting=false;save();Task{await client.clearCache()}}
+    func releasePresentation(){presenting=false}
+    func loadConfig() async {do {config=try await client.config();offline=await client.isOffline} catch {if options.logLevel != .off {Logger(subsystem:"it.releasek.sdk",category:"network").warning("Unable to load configuration.")}}}
     func releases() async throws->[Release] {try await client.releases().items}
     func changelog(cursor:String?=nil) async throws->ReleasesResponse {
-        if cursor == nil {config=try await client.config()}
-        let page=try await client.releases(cursor:cursor)
+        if cursor == nil {config=try await client.config(force:true)}
+        let page=try await client.releases(cursor:cursor,force:true);offline=await client.isOffline
         for release in page.items {commentCounts[release.version]=release.commentCount;voteStates["release:\(release.id)"]=VoteState(up:release.upCount,down:release.downCount,selected:release.myVote)}
         return page
     }
     func vote(type:String,id:String,value:Int) async throws -> VoteResult {try await client.vote(targetType:type,targetId:id,value:value)}
-    func comments(version:String,cursor:String?=nil) async throws -> CommentPage {try await client.comments(version:version,cursor:cursor)}
+    func comments(version:String,cursor:String?=nil) async throws -> CommentPage {let page=try await client.comments(version:version,cursor:cursor);offline=await client.isOffline;return page}
     func acceptGuidelines() async throws {try await client.acceptGuidelines();await loadConfig()}
     func addComment(version:String,body:String,parentId:String?=nil) async throws {let comment=try await client.addComment(version:version,body:body,parentId:parentId);if let count=comment.releaseCommentCount {commentCounts[version]=count}}
     func report(id:String,reason:String) async throws {try await client.report(commentId:id,reason:reason)}
     func block(id:String) async throws {try await client.block(commentId:id)}
     func prepareWhatsNew() async -> Release? {
-        guard options.whatsNew.isEnabled,!fetching,let version=Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String else{return nil}
+        guard options.whatsNew.isEnabled,!fetching,!presenting,let version=Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String else{return nil}
         fetching=true;defer{fetching=false}
         let decision=WhatsNewDecider.prepare(version:version,state:&state,treatFirstLaunchAsUpdate:options.whatsNew.treatFirstLaunchAsUpdate(),debugAlwaysShow:options.whatsNew.debugAlwaysShow);save()
         guard decision == .fetch else{return nil}
-        do {let response=try await client.whatsNew(version:version);guard let responseState=response.releaseState else{return nil};let decision=WhatsNewDecider.resolve(version:version,response:responseState,state:&state,now:Date());save();guard decision == .show,let release=response.release else{return nil};try await Task.sleep(for:options.whatsNew.presentationDelay);return release}catch{if options.logLevel != .off {Logger(subsystem:"it.releasek.sdk",category:"network").warning("Unable to load release notes.")};return nil}
+        do {let response=try await client.whatsNew(version:version);guard let responseState=response.releaseState else{return nil};let decision=WhatsNewDecider.resolve(version:version,response:responseState,state:&state,now:Date());save();guard decision == .show,let release=response.release else{return nil};try await Task.sleep(for:options.whatsNew.presentationDelay);presenting=true;return release}catch{if options.logLevel != .off {Logger(subsystem:"it.releasek.sdk",category:"network").warning("Unable to load release notes.")};return nil}
     }
     func markPresented(_ version:String){WhatsNewDecider.markPresented(version:version,state:&state);save();Task{try? await client.event(type:"sheet_impression",version:version)}}
 }
@@ -104,7 +114,7 @@ private struct WhatsNewModifier:ViewModifier {
     @State private var release:Release?
     let isEnabled:Bool;let onPresent:((String)->Void)?;let onDismiss:(()->Void)?
     func body(content:Content)->some View {
-        content.task{await attempt()}.onChange(of:phase){_,newValue in if newValue == .active {Task{await attempt()}}}.sheet(item:$release,onDismiss:onDismiss){item in
+        content.task{await attempt()}.onChange(of:phase){_,newValue in if newValue == .active {Task{await attempt()}}}.sheet(item:$release,onDismiss:{ReleaseKit.runtime?.releasePresentation();onDismiss?()}){item in
             if let runtime=ReleaseKit.runtime {WhatsNewSheet(release:item,runtime:runtime,onPresent:{runtime.markPresented(item.version);onPresent?(item.version)}).presentationDetents([.medium,.large]).presentationDragIndicator(.visible)}
         }
     }
@@ -118,7 +128,7 @@ private struct WhatsNewSheet:View {
     @Environment(\.dismiss) private var dismiss
     @State private var didPresent=false
     let release:Release;let runtime:Runtime;let onPresent:()->Void
-    var body:some View {NavigationStack {VStack(alignment:.leading,spacing:16){Text("What's New",bundle:.module).font(.title2.bold());Text(release.version).font(.subheadline).foregroundStyle(.secondary);ScrollView {Text(release.notes).frame(maxWidth:.infinity,alignment:.leading).textSelection(.enabled)};if runtime.config?.features.votes == true {VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)};Button(String(localized:"Continue",bundle:.module)){dismiss()}.buttonStyle(.borderedProminent).frame(maxWidth:.infinity);NavigationLink(String(localized:"All updates",bundle:.module)){ReleaseKitChangelogView()}.frame(maxWidth:.infinity)}.padding().toolbar{ToolbarItem(placement:.topBarTrailing){Menu {if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)};if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}}label:{Image(systemName:"ellipsis.circle").accessibilityLabel("More")}}}.onAppear{if !didPresent {didPresent=true;onPresent()}}}}
+    var body:some View {NavigationStack {VStack(alignment:.leading,spacing:16){Text("What's New",bundle:.module).font(.title2.bold());Text(release.version).font(.subheadline).foregroundStyle(.secondary);ScrollView {Text(release.notes).frame(maxWidth:.infinity,alignment:.leading).textSelection(.enabled)};if runtime.config?.features.votes == true {VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)};Button(String(localized:"Continue",bundle:.module)){dismiss()}.buttonStyle(.borderedProminent).frame(maxWidth:.infinity);NavigationLink(String(localized:"All updates",bundle:.module)){ReleaseKitChangelogView()}.frame(maxWidth:.infinity)}.padding().toolbar{ToolbarItem(placement:.topBarTrailing){Menu {if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)};if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}}label:{Image(systemName:"ellipsis.circle").accessibilityLabel("More")}}}.onAppear{if !didPresent {didPresent=true;onPresent()}}.onDisappear{runtime.releasePresentation()}}}
 }
 
 /// Native release history with in-app up/down votes. Embed in a NavigationStack,
@@ -151,6 +161,7 @@ private struct WhatsNewSheet:View {
                                 VStack(alignment:.leading,spacing:4){Text(config.app.name).font(.headline);Text("Latest updates and improvements",bundle:.module).font(.subheadline).foregroundStyle(.secondary)}
                             }.padding(.vertical,8)
                         }
+                        if runtime.offline {Label(String(localized:"Offline — showing saved updates",bundle:.module),systemImage:"wifi.slash").font(.caption).foregroundStyle(.secondary)}
                         if failed {HStack {Text("Could not refresh updates.",bundle:.module).font(.caption);Spacer();Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}.foregroundStyle(.secondary)}
                         ForEach(releases){release in
                             VStack(alignment:.leading,spacing:16) {

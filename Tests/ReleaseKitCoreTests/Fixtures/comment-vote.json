@@ -1,0 +1,14 @@
+{
+  "request": {
+    "targetType": "comment",
+    "targetId": "c1",
+    "value": 1
+  },
+  "response": {
+    "targetType": "comment",
+    "targetId": "c1",
+    "upCount": 1,
+    "downCount": 0,
+    "myVote": 1
+  }
+}

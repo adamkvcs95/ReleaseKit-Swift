@@ -1,11 +1,25 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import XCTest
 @testable import ReleaseKitCore
 
+private final class TransportState:@unchecked Sendable {
+    static let shared=TransportState()
+    private let lock=NSLock()
+    private var modes:[String:String]=[:]
+    func set(_ id:String,_ mode:String){lock.lock();defer{lock.unlock()};modes[id]=mode}
+    func mode(_ id:String)->String{lock.lock();defer{lock.unlock()};return modes[id] ?? "online"}
+}
 private final class SDKProtocol:URLProtocol,@unchecked Sendable {
     override class func canInit(with request:URLRequest)->Bool {request.url?.host=="example.test"}
     override class func canonicalRequest(for request:URLRequest)->URLRequest {request}
     override func startLoading(){
+        let mode=TransportState.shared.mode(request.value(forHTTPHeaderField:"X-Test-ID") ?? "")
+        if mode=="offline" {client?.urlProtocol(self,didFailWithError:URLError(.notConnectedToInternet));return}
+        if mode=="notFound" {client?.urlProtocol(self,didReceive:HTTPURLResponse(url:request.url!,statusCode:404,httpVersion:nil,headerFields:nil)!,cacheStoragePolicy:.notAllowed);client?.urlProtocol(self,didLoad:Data());client?.urlProtocolDidFinishLoading(self);return}
+        if mode=="etag",request.value(forHTTPHeaderField:"If-None-Match")=="v1" {client?.urlProtocol(self,didReceive:HTTPURLResponse(url:request.url!,statusCode:304,httpVersion:nil,headerFields:["ETag":"v1"])!,cacheStoragePolicy:.notAllowed);client?.urlProtocolDidFinishLoading(self);return}
         do {
             let fixture=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"changelog",withExtension:"json")!)) as! [String:Any]
             let vote=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"release-vote",withExtension:"json")!)) as! [String:Any]
@@ -13,6 +27,7 @@ private final class SDKProtocol:URLProtocol,@unchecked Sendable {
             if request.value(forHTTPHeaderField:"X-RK-App-Key") != "rk_pub_0123456789ABCDEFGHIJKLMN" || request.value(forHTTPHeaderField:"X-RK-Anon-Id") != "a2e6885b-9e93-4308-a632-81d8effd08bd" {
                 status=401;payload=["error":["code":"invalid_app_key","message":"Invalid headers"]]
             } else if request.url!.path.hasSuffix("/config") {payload=fixture["config"]!}
+            else if request.url!.path.hasSuffix("/events") {payload=[String:String]()}
             else if request.url!.path.hasSuffix("/guidelines/accept") {payload=["accepted":true]}
             else if request.url!.path.hasSuffix("/comments") {
                 let comment=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"comments",withExtension:"json")!)) as! [String:Any]
@@ -29,7 +44,7 @@ private final class SDKProtocol:URLProtocol,@unchecked Sendable {
                 else {payload=vote["response"]!}
             } else if URLComponents(url:request.url!,resolvingAgainstBaseURL:false)?.queryItems?.contains(where:{$0.name=="cursor"&&$0.value=="next-page"}) == true {payload=["items":[],"nextCursor":NSNull()]}
             else {payload=fixture["releases"]!}
-            let response=HTTPURLResponse(url:request.url!,statusCode:status,httpVersion:nil,headerFields:["Content-Type":"application/json"])!
+            let response=HTTPURLResponse(url:request.url!,statusCode:status,httpVersion:nil,headerFields:["Content-Type":"application/json","ETag":"v1"])!
             client?.urlProtocol(self,didReceive:response,cacheStoragePolicy:.notAllowed)
             client?.urlProtocol(self,didLoad:try JSONSerialization.data(withJSONObject:payload))
             client?.urlProtocolDidFinishLoading(self)
@@ -54,6 +69,29 @@ final class APIClientTests:XCTestCase {
         XCTAssertEqual(posted.status,"visible");XCTAssertEqual(posted.releaseCommentCount,1);XCTAssertEqual(posted.author.name,"Sunny Otter AB12")
         let page=try await api.comments(version:"4.0");XCTAssertEqual(page.items.first?.id,posted.id)
         let next=try await api.comments(version:"4.0",cursor:page.nextCursor);XCTAssertTrue(next.items.isEmpty)
+    }
+    func testNetworkFailureUsesDiskButHTTPDenialDoesNot() async throws {
+        let id=UUID().uuidString,root=FileManager.default.temporaryDirectory.appendingPathComponent(id);defer{try? FileManager.default.removeItem(at:root)}
+        let config=URLSessionConfiguration.ephemeral;config.protocolClasses=[SDKProtocol.self];config.httpAdditionalHeaders=["X-Test-ID":id]
+        let api=APIClient(baseURL:URL(string:"https://example.test")!,appKey:"rk_pub_0123456789ABCDEFGHIJKLMN",anonID:"a2e6885b-9e93-4308-a632-81d8effd08bd",session:URLSession(configuration:config),cacheDirectory:root)
+        _=try await api.releases(force:true);TransportState.shared.set(id,"etag");let revalidated=try await api.releases(force:true);XCTAssertEqual(revalidated.items.first?.version,"4.0");TransportState.shared.set(id,"offline")
+        let offline=try await api.releases(force:true);XCTAssertEqual(offline.items.first?.version,"4.0");let saved=await api.isOffline;XCTAssertTrue(saved)
+        do{_=try await api.vote(targetType:"release",targetId:"rel1",value:1);XCTFail("Writes must not be queued")}catch is URLError{}
+        TransportState.shared.set(id,"notFound")
+        do{_=try await api.releases(force:true);XCTFail("Must not show stale hidden/removed content")}catch ReleaseKitNetworkError.http(404){}
+        TransportState.shared.set(id,"offline")
+        do{_=try await api.releases(force:true);XCTFail("Denied cache must be removed")}catch is URLError{}
+    }
+    func testOfflineEventsAreBoundedAndFlushedWhenOnline() async throws {
+        let id=UUID().uuidString,root=FileManager.default.temporaryDirectory.appendingPathComponent(id);defer{try? FileManager.default.removeItem(at:root)}
+        let sessionConfig=URLSessionConfiguration.ephemeral;sessionConfig.protocolClasses=[SDKProtocol.self];sessionConfig.httpAdditionalHeaders=["X-Test-ID":id]
+        let key="rk_pub_0123456789ABCDEFGHIJKLMN",anon="a2e6885b-9e93-4308-a632-81d8effd08bd",base=URL(string:"https://example.test")!
+        let api=APIClient(baseURL:base,appKey:key,anonID:anon,session:URLSession(configuration:sessionConfig),cacheDirectory:root)
+        TransportState.shared.set(id,"offline")
+        for _ in 0..<52 {do{try await api.event(type:"sheet_impression",version:"4.0")}catch{}}
+        let disk=ResponseCache(directory:root,scope:"\(base.absoluteString)|\(key)|\(anon)")
+        let queued=try XCTUnwrap(disk.read("__events"));XCTAssertEqual((try JSONSerialization.jsonObject(with:queued.data) as! [Any]).count,50)
+        TransportState.shared.set(id,"online");_=try await api.config();XCTAssertNil(disk.read("__events"))
     }
     func testPreservesServerVoteFailure() async throws {
         do {_=try await client().vote(targetType:"release",targetId:"rel1",value:-1);XCTFail("Expected rate limit")}

@@ -1,12 +1,12 @@
 # ReleaseKit for iOS
 
-A native changelog with release notes and up/down votes. iOS 17+, Swift 6, no third-party dependencies. This is a development preview; use the `main` branch while the first versioned release is being prepared.
+Native changelog, automatic What's New, release/comment voting and community comments. iOS 17+, Swift 6, system frameworks only.
 
-## Add the package
+**Current candidate: 1.0.0-rc.1.** Core and simulator checks are automated; a signed real-iPhone App Attest test is required before promotion to stable 1.0.0. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
-In Xcode, add `https://github.com/adamkvcs95/ReleaseKit-Swift`, choose the **main branch**, and link the **ReleaseKit** product. Copy your public app key from ReleaseKit → your app → SDK installation. This is an app identifier, not an Appwrite API key or an Apple private key.
+## Install
 
-## Open the changelog
+Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select the `1.0.0-rc.1` pre-release (or `main` while testing), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
 
 ```swift
 import SwiftUI
@@ -14,11 +14,9 @@ import ReleaseKit
 
 @main
 struct MyApp: App {
-    init() {
-        ReleaseKit.configure(appKey: "rk_pub_REPLACE_ME")
-    }
+    init() { ReleaseKit.configure(appKey: "rk_pub_REPLACE_ME") }
     var body: some Scene {
-        WindowGroup { ContentView() }
+        WindowGroup { ContentView().releaseKitWhatsNew() }
     }
 }
 
@@ -31,33 +29,54 @@ struct ContentView: View {
 }
 ```
 
-The modifier presents an iPhone sheet with navigation and a Done button. It shows your app icon, three-line release previews, dates and compact voting controls. Tap a release to open its complete notes and comments. The detail toolbar’s ellipsis menu contains Community guidelines and Contact developer; the detail screen has no footer branding. Add a comment using the square.and.pencil icon at the right of the bottom toolbar. List/detail votes share state. The host app’s CFBundleShortVersionString receives an Installed badge; when different, the server’s latestVersion receives a Latest badge. Version comparison normalizes trailing zeros. Tap the selected vote again to remove it, or the other direction to switch. Votes belong to the anonymous installation identity held in Keychain and are reloaded from the server when reopening or refreshing the changelog. Failed submissions restore the previous button/count state. No Apple or Appwrite account is required for the end user.
+Use `ReleaseKitSettingsLink()` or `ReleaseKitChangelogView()` inside an existing NavigationStack. Configure once before presenting SDK UI. Use one `.releaseKitWhatsNew()` modifier per scene; `ReleaseKit.presentWhatsNewIfNeeded()` is also available for UIKit.
 
-For an existing `NavigationStack`, use `ReleaseKitSettingsLink()` or push `ReleaseKitChangelogView()` directly. Pull to refresh; **Load more updates** loads older pages. Loading, empty, failure and unconfigured states are handled explicitly. Light/dark mode and Dynamic Type follow iOS.
+## What's New
 
-Voting is available when the server advertises `features.votes=true`. The release-only server flag is `RK_ENABLE_RELEASE_VOTES=true`; it does not enable comments, comment voting or web writes. App-level bans, rate limits and attestation requirements still apply. The anonymous app key/installation identifier is not proof of a unique person or a genuine app installation; App Attest remains future work.
+First install records the version without interrupting the user. A subsequent version change fetches that installed version's release notes and presents once. A downgrade is skipped; a release is marked handled only after its sheet appears. Hidden releases are skipped, unavailable notes retry on subsequent attempts with bounded pending-state lifetimes. State is stored separately for each endpoint/app key/installation. Concurrent presentation attempts are guarded.
 
-## Comments
+`Options.whatsNew` controls enabled state, delay, first-launch opt-in and debug force-show. The app's Info.plist `CFBundleShortVersionString` is the source of the installed version. The changelog uses three-line previews with 10-point spacing, Installed/Latest badges, dates, counts and compact voting; details show complete notes. The top ellipsis menu opens Community guidelines and Contact developer. The bottom-right square.and.pencil icon opens comment composition. There is no detail footer branding.
 
-`RK_ENABLE_SDK_COMMENTS=true` on the server and the app’s Comments setting enable native posting, guidelines acceptance, reporting and blocking. `Options.comments.isEnabled` defaults to true; set it to false to hide commenting in the host app. The demo enables it. This gate does not enable comment voting or browser writes.
+## Community
 
-Before the first post, the user accepts the community guidelines. The server assigns a stable random-style pseudonym (e.g. Sunny Otter AB12) scoped to the app and anonymous installation; the name is shown in the composer and on comments without exposing the installation ID. New comments appear automatically without developer approval. Content rejection, bans, reports and blocking remain enforced. The preview displays the server comment count and updates it after posting. Release cards are spaced 10 points apart. The composer preserves text on errors. Comments paginate in the detail view; long-press a visible comment for reply/report/block actions. The SDK retains the existing preview limit of three inline replies per thread.
+Release and comment votes can be switched or removed by tapping the selected direction again; list/detail state stays synchronized. Failed writes restore the prior selection/count. SDK config controls release `features.votes` and independent `features.commentVotes`.
 
-## Demo
+Comments use stable friendly names scoped to the app's anonymous installation, with no sign-in. New accepted comments appear automatically. Guidelines acceptance is required before the first post. The server retains content rejection, rate limits, bans, reporting, blocking and developer moderation. Long-press a visible comment for reply/report/block. Comment lists paginate; up to three replies per thread are inlined. Own legacy pending posts show Awaiting review. The composer preserves its draft after errors. The preview comment count updates from the server response.
 
-Open `Examples/ReleaseKitDemo/ReleaseKitDemo.xcodeproj`. Add an ignored `Examples/ReleaseKitDemo/Local.xcconfig`:
+## Offline behavior
+
+A private disk cache stores validated read responses, partitioned by endpoint, app key, installation, locale, storefront and URL. Config is fresh for 24 hours; release reads can reuse a five-minute cache, while explicit changelog refresh forces ETag revalidation. Connection failures fall back to saved reads for up to seven days with an Offline label. Server authorization/removal errors do not fall back to stale data. Cache entries and disk entry count are bounded. Successful votes patch cached vote state; comment counts update from the server; blocking/reporting removes cached community reads.
+
+Comments, votes, reports and blocks are never queued. Analytics events alone have a bounded queue of 50, retried after configuration loads (best effort, at-least-once). Host apps must describe the enabled data collection in their own privacy disclosures. The privacy manifest declares anonymous identifiers, product interactions and user content; no required-reason APIs are used by this SDK.
+
+## App Attest
+
+`Options.appAttest` defaults to `.automatic`; `.disabled` opts out. On supported real devices, the SDK registers a Secure Enclave key with Apple and the ReleaseKit server, then signs each write with a fresh server challenge. The server verifies the Apple certificate chain, nonce, app identity, public key, environment, signature, counter and single-use challenge. Keys are scoped to endpoint/app/installation and stored in Keychain; no private key is uploaded. Invalid keys can re-enroll once. Apple service availability failures preserve optional, unverified operation; an app requiring attestation rejects unverified writes. Reads always remain available.
+
+In the ReleaseKit dashboard, enter the **Apple App ID prefix** (usually the 10-character Team ID) from Apple Developer → Certificates, Identifiers & Profiles → Identifiers → your app. This is different from the ASC Issuer ID. Configure the host app's `com.apple.developer.devicecheck.appattest-environment` entitlement with appropriate provisioning. Production/TestFlight use production proofs. Development proofs require an explicitly enabled test server; `RK_ATTEST_ALLOW_DEV` remains false on production. Keep Require App Attest off until a signed real-device integration test passes. Unsupported devices and Simulator remain unverified; if required, they can read but cannot write.
+
+App Attest verifies app instances, not individual people. Fraud receipt/risk scoring is not implemented. One production web replica serializes counter updates; deterministic database claim rows provide cross-process challenge single use and key ownership binding. Multi-replica counter coordination must be designed before horizontal scaling.
+
+## Server switches
+
+- `RK_ENABLE_RELEASE_VOTES`: SDK release votes.
+- `RK_ENABLE_COMMENT_VOTES`: SDK comment votes.
+- `RK_ENABLE_SDK_COMMENTS`: comments/consent/reports/blocks, additionally respecting app settings.
+- `RK_ENABLE_SDK_EVENTS`: anonymous SDK events.
+- `RK_ENABLE_APP_ATTEST`: attestation enrollment; per-app prefix enables optional verification.
+- `RK_ATTEST_ALLOW_DEV`: development proofs; leave false on production.
+
+`RK_ENABLE_EXPERIMENTAL_WRITES` can remain false; none of these switches enables browser writes. `Options.comments.isEnabled=false` hides native commenting.
+
+## Demo and validation
+
+Open `Examples/ReleaseKitDemo/ReleaseKitDemo.xcodeproj`. Create ignored `Examples/ReleaseKitDemo/Local.xcconfig`:
 
 ```xcconfig
 RK_DEMO_APP_KEY = rk_pub_REPLACE_ME
 RK_DEMO_BASE_URL = https:/$()/releasek.it
 ```
 
-Run on an iPhone Simulator and tap **Open changelog**. The demo configures only the changelog flow and does not open the automatic What's New sheet. Debug launch argument `--show-changelog` opens it immediately.
+The demo uses the local package and automatic What's New. Debug argument `--show-changelog` opens the changelog directly, suppressing the automatic sheet. `--test-offline` simulates connection failure without modifying device networking; first run online to populate the cache.
 
-## Validation and scope
-
-`swift test` covers version decisions, optimistic vote transitions, shared API JSON contracts, request encoding, pagination and network errors. Build the `ReleaseKit` scheme for an iOS Simulator to compile UIKit/SwiftUI code. The canonical contract fixtures live in the web repository's `contracts/sdk/`; exact copies are included in this package's test fixtures.
-
-Automatic What's New presentation remains available as an earlier preview API (`.releaseKitWhatsNew()`), but this iteration focuses on the explicit changelog view and release votes. Release details support comments, replies, reporting and blocking through the SDK. Comment voting, offline cache and App Attest are outside this release's completed scope. No stable 1.0.0 tag is published yet.
-
-The privacy manifest declares anonymous installation identifiers and product interactions. Review your app's privacy declarations for the features you enable; enabling comments also submits the user’s comment text for moderation.
+`swift test` covers state decisions, cache partition/expiry/invalidation, ETags, offline read/write behavior, queued events, models and shared request-signing fixtures. CI tests Linux and macOS and compiles the iOS library/demo. Server tests validate Apple's official reference attestation, tampering/expiry, real ECDSA assertions, nonce replay, ownership binding and required/optional behavior. Canonical API fixtures live in `contracts/sdk/` of the web repository; exact copies are included in SDK tests.

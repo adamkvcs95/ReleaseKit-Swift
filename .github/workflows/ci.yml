@@ -1,0 +1,20 @@
+name: SDK validation
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  core-linux:
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
+      - run: xcodebuild -scheme ReleaseKit -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - run: xcodebuild -project Examples/ReleaseKitDemo/ReleaseKitDemo.xcodeproj -scheme ReleaseKitDemo -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
