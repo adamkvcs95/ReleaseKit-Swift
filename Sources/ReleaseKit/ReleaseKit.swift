@@ -128,7 +128,7 @@ private struct WhatsNewSheet:View {
     @Environment(\.dismiss) private var dismiss
     @State private var didPresent=false
     let release:Release;let runtime:Runtime;let onPresent:()->Void
-    var body:some View {NavigationStack {VStack(alignment:.leading,spacing:16){Text("What's New",bundle:.module).font(.title2.bold());Text(release.version).font(.subheadline).foregroundStyle(.secondary);ScrollView {Text(release.notes).frame(maxWidth:.infinity,alignment:.leading).textSelection(.enabled)};if runtime.config?.features.votes == true {VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)};Button(String(localized:"Continue",bundle:.module)){dismiss()}.buttonStyle(.borderedProminent).frame(maxWidth:.infinity);NavigationLink(String(localized:"All updates",bundle:.module)){ReleaseKitChangelogView()}.frame(maxWidth:.infinity)}.padding().toolbar{ToolbarItem(placement:.topBarTrailing){Menu {if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)};if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}}label:{Image(systemName:"ellipsis.circle").accessibilityLabel("More")}}}.tint(.indigo).onAppear{if !didPresent {didPresent=true;onPresent()}}.onDisappear{runtime.releasePresentation()}}}
+    var body:some View {NavigationStack {VStack(alignment:.leading,spacing:16){Text("What's New",bundle:.module).font(.title2.bold());Text(release.version).font(.subheadline).foregroundStyle(.secondary);ScrollView {Text(release.notes).frame(maxWidth:.infinity,alignment:.leading).textSelection(.enabled)};if runtime.config?.features.votes == true {VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)};Button(String(localized:"Continue",bundle:.module)){dismiss()}.buttonStyle(.borderedProminent).tint(.indigo).frame(maxWidth:.infinity);NavigationLink(String(localized:"All updates",bundle:.module)){ReleaseKitChangelogView()}.tint(.indigo).frame(maxWidth:.infinity)}.padding().toolbar{ToolbarItem(placement:.topBarTrailing){Menu {if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)};if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}}label:{Image(systemName:"ellipsis.circle").accessibilityLabel("More")}}}.tint(.primary).onAppear{if !didPresent {didPresent=true;onPresent()}}.onDisappear{runtime.releasePresentation()}}}
 }
 
 /// Native release history with in-app up/down votes. Embed in a NavigationStack,
@@ -145,13 +145,13 @@ private struct WhatsNewSheet:View {
             if ReleaseKit.runtime == nil {
                 ContentUnavailableView(String(localized:"ReleaseKit is not configured",bundle:.module),systemImage:"gearshape",description:Text("Configure ReleaseKit with your app key before opening the changelog.",bundle:.module))
             } else if isLoading {
-                ProgressView(String(localized:"Loading updates…",bundle:.module)).frame(maxWidth:.infinity,maxHeight:.infinity)
+                ProgressView(String(localized:"Loading updates…",bundle:.module)).tint(.indigo).frame(maxWidth:.infinity,maxHeight:.infinity)
             } else if releases.isEmpty {
                 ContentUnavailableView {
                     Label(String(localized:failed ? "Unable to load updates":"No updates yet",bundle:.module),systemImage:failed ? "wifi.exclamationmark":"sparkles")
                 } description:{
                     Text(failed ? String(localized:"Check your connection and try again.",bundle:.module):String(localized:"New releases will appear here.",bundle:.module))
-                } actions:{Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}
+                } actions:{Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}.tint(.indigo)}
             } else if let runtime=ReleaseKit.runtime {
                 ScrollView {
                     LazyVStack(alignment:.leading,spacing:10) {
@@ -162,7 +162,7 @@ private struct WhatsNewSheet:View {
                             }.padding(.vertical,8)
                         }
                         if runtime.offline {Label(String(localized:"Offline — showing saved updates",bundle:.module),systemImage:"wifi.slash").font(.caption).foregroundStyle(.secondary)}
-                        if failed {HStack {Text("Could not refresh updates.",bundle:.module).font(.caption);Spacer();Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}.foregroundStyle(.secondary)}
+                        if failed {HStack {Text("Could not refresh updates.",bundle:.module).font(.caption);Spacer();Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}.tint(.indigo)}.foregroundStyle(.secondary)}
                         ForEach(releases){release in
                             VStack(alignment:.leading,spacing:16) {
                                 NavigationLink {ReleaseDetailView(release:release,runtime:runtime)} label:{
@@ -198,7 +198,7 @@ private struct WhatsNewSheet:View {
                             .background(Color(uiColor:.secondarySystemGroupedBackground),in:RoundedRectangle(cornerRadius:20))
                         }
                         if nextCursor != nil {
-                            Button {Task{await loadMore()}} label:{if loadingMore {ProgressView()}else{Text("Load more updates",bundle:.module)}}.disabled(loadingMore).frame(maxWidth:.infinity,minHeight:44)
+                            Button {Task{await loadMore()}} label:{if loadingMore {ProgressView()}else{Text("Load more updates",bundle:.module)}}.tint(.indigo).disabled(loadingMore).frame(maxWidth:.infinity,minHeight:44)
                         }
                         if runtime.config?.branding.showPoweredBy == true {Link(String(localized:"Powered by ReleaseKit",bundle:.module),destination:URL(string:"https://releasek.it")!).font(.caption).foregroundStyle(.secondary).frame(maxWidth:.infinity).padding(.top,6)}
                     }.padding(20)
@@ -207,7 +207,7 @@ private struct WhatsNewSheet:View {
                 .refreshable{await refresh()}
             }
         }
-        .tint(.indigo)
+        .tint(.primary)
         .navigationTitle(String(localized:"What's New",bundle:.module))
         .navigationBarTitleDisplayMode(.inline)
         .task{await refresh()}
@@ -237,7 +237,7 @@ public extension View {
         sheet(isPresented:isPresented){
             NavigationStack {
                 ReleaseKitChangelogView().toolbar{ToolbarItem(placement:.confirmationAction){Button(String(localized:"Done",bundle:.module)){isPresented.wrappedValue=false}}}
-            }.tint(.indigo)
+            }.tint(.primary)
         }
     }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.0-rc.4
+
+- Use adaptive neutral colors for navigation and toolbar actions, including Done, back, overflow, compose, Cancel and Post.
+- Preserve indigo content/vote accents and the green Installed badge.
+
 ## 1.0.0-rc.3
 
 - Restore green styling for the Installed badge; Latest and other SDK accents remain indigo.

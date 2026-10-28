@@ -27,7 +27,7 @@ struct EngagementPill:ViewModifier {
                 Rectangle().fill(Color.primary.opacity(0.12)).frame(width:1,height:20).accessibilityHidden(true)
                 button(value:-1,count:state.downCount,label:String(localized:"Downvote",bundle:.module))
             }
-            .modifier(EngagementPill(compact:compact))
+            .modifier(EngagementPill(compact:compact)).tint(.indigo)
             .fixedSize(horizontal:true,vertical:false)
             if failed {Text(String(localized:"Could not save your vote.",bundle:.module)).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("releasekit.vote.error")}
         }
@@ -96,14 +96,14 @@ struct EngagementPill:ViewModifier {
             Section(String(localized:"Comments",bundle:.module)) {
                 if commentsEnabled {
                     if runtime.offline {Label(String(localized:"Offline — showing saved comments",bundle:.module),systemImage:"wifi.slash").font(.caption).foregroundStyle(.secondary)}
-                    if loading {ProgressView(String(localized:"Loading comments…",bundle:.module))}
-                    if failed {Text("Could not load comments.",bundle:.module).foregroundStyle(.secondary);Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}
+                    if loading {ProgressView(String(localized:"Loading comments…",bundle:.module)).tint(.indigo)}
+                    if failed {Text("Could not load comments.",bundle:.module).foregroundStyle(.secondary);Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}.tint(.indigo)}
                     if comments.isEmpty && !failed && !loading {Text("No comments yet.",bundle:.module).foregroundStyle(.secondary)}
                     ForEach(comments){comment in
                         commentRow(comment)
                         ForEach(comment.replies){reply in commentRow(reply).padding(.leading,16)}
                     }
-                    if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.disabled(loadingMore)}
+                    if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.tint(.indigo).disabled(loadingMore)}
                     if actionFailed {Text("This action could not be completed.",bundle:.module).font(.caption).foregroundStyle(.secondary)}
                 } else {Text("Comments are disabled for this app.",bundle:.module).foregroundStyle(.secondary)}
             }
@@ -131,7 +131,7 @@ struct EngagementPill:ViewModifier {
                     .accessibilityIdentifier("releasekit.release.menu")
             }
         }
-        .tint(.indigo)
+        .tint(.primary)
         .task{await refresh()}.refreshable{await refresh()}
         .sheet(isPresented:$showGuidelines,onDismiss:{if agreed {agreed=false;showCompose=true}}){guidelines}
         .sheet(isPresented:$showCompose){ComposeComment(runtime:runtime,version:release.version,parentId:replyTo,onSaved:{Task{await refresh()}})}
@@ -144,20 +144,20 @@ struct EngagementPill:ViewModifier {
         NavigationStack {
             VStack(alignment:.leading,spacing:20) {
                 Text("Be respectful. Do not post abuse, hate, spam, or private information.",bundle:.module)
-                if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Read the full guidelines",bundle:.module),destination:url)}
+                if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Read the full guidelines",bundle:.module),destination:url).tint(.indigo)}
                 if actionFailed {Text("This action could not be completed.",bundle:.module).foregroundStyle(.secondary)}
-                Button(String(localized:"I agree",bundle:.module)){Task{do{try await runtime.acceptGuidelines();agreed=true;showGuidelines=false}catch{actionFailed=true}}}.buttonStyle(.borderedProminent)
+                Button(String(localized:"I agree",bundle:.module)){Task{do{try await runtime.acceptGuidelines();agreed=true;showGuidelines=false}catch{actionFailed=true}}}.buttonStyle(.borderedProminent).tint(.indigo)
                 Spacer()
             }.padding().navigationTitle(String(localized:"Community guidelines",bundle:.module)).navigationBarTitleDisplayMode(.inline)
                 .toolbar{ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){showGuidelines=false}}}
-        }.tint(.indigo)
+        }.tint(.primary)
     }
     private func commentRow(_ comment:Comment)->some View {
         VStack(alignment:.leading,spacing:8) {
             HStack {
                 Text(comment.author.name ?? "User \(comment.author.tag ?? "")").font(.caption.bold())
                 if comment.author.isMe {Text("You",bundle:.module).font(.caption2).foregroundStyle(.secondary)}
-                if comment.author.kind=="developer" {Text("Developer",bundle:.module).font(.caption2).foregroundStyle(.tint)}
+                if comment.author.kind=="developer" {Text("Developer",bundle:.module).font(.caption2).foregroundStyle(Color.indigo)}
             }
             Text(comment.body).textSelection(.enabled)
             if comment.author.verified == true {Label(String(localized:"Verified app",bundle:.module),systemImage:"checkmark.shield").font(.caption2).foregroundStyle(.secondary)}
@@ -197,7 +197,7 @@ struct EngagementPill:ViewModifier {
             Form {
                 Section {
                     if let name=runtime.config?.me.displayName {LabeledContent(String(localized:"Posting as",bundle:.module),value:name)}
-                    TextEditor(text:$text).frame(minHeight:140).accessibilityLabel(Text("Comment",bundle:.module)).accessibilityIdentifier("releasekit.comment.body")
+                    TextEditor(text:$text).tint(.indigo).frame(minHeight:140).accessibilityLabel(Text("Comment",bundle:.module)).accessibilityIdentifier("releasekit.comment.body")
                     Text("\(text.count)/1000").font(.caption).foregroundStyle(.secondary)
                 } footer:{Text("Your comment will appear publicly after posting.",bundle:.module)}
                 if let error {Section {Text(error).foregroundStyle(.red).accessibilityIdentifier("releasekit.comment.error")}}
@@ -208,7 +208,7 @@ struct EngagementPill:ViewModifier {
                 ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){dismiss()}.disabled(sending)}
                 ToolbarItem(placement:.confirmationAction){Button {Task{await post()}} label:{if sending {ProgressView()}else{Text("Post",bundle:.module)}}.disabled(sending || text.trimmingCharacters(in:.whitespacesAndNewlines).count<2 || text.count>1000).accessibilityIdentifier("releasekit.comment.post")}
             }
-        }.tint(.indigo)
+        }.tint(.primary)
     }
     private func post() async {
         sending=true;error=nil;defer{sending=false}
