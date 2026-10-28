@@ -23,7 +23,7 @@ private struct CommentThreadGuides:ViewModifier {
                 }
             }
             .listRowInsets(EdgeInsets(top:0,leading:16,bottom:0,trailing:16))
-            .alignmentGuide(.listRowSeparatorLeading){_ in 0}
+            .alignmentGuide(.listRowSeparatorLeading){_ in CGFloat(depth)*12}
             .alignmentGuide(.listRowSeparatorTrailing){dimensions in dimensions.width}
     }
 }

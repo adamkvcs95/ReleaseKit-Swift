@@ -2,7 +2,7 @@
 
 ## 1.0.0-rc.10
 
-- Connect native comment thread guides across adjacent reply rows and Load more replies rows. Keep content padding inside the full-height guides, preserving comment separators and adaptive colors.
+- Connect native comment thread guides across adjacent reply rows and Load more replies rows. Keep content padding inside the full-height guides and inset horizontal separators by reply depth so they start beside the text.
 
 ## 1.0.0-rc.9
 
