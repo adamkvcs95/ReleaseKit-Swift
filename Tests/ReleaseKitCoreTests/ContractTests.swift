@@ -3,6 +3,13 @@ import XCTest
 @testable import ReleaseKitCore
 
 final class ContractTests:XCTestCase {
+    func testDecodesNestedCommentThreadAndPreservesCase() throws {
+        struct Fixture:Decodable {let page:CommentPage}
+        let page=try JSONDecoder().decode(Fixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"nested-comments",withExtension:"json")!)).page
+        let root=try XCTUnwrap(page.items.first),child=try XCTUnwrap(root.replies.first),grandchild=try XCTUnwrap(child.replies.first)
+        XCTAssertEqual(root.id,"c1");XCTAssertEqual(child.id,"c2");XCTAssertEqual(grandchild.id,"c3")
+        XCTAssertEqual(grandchild.body,"lowercase Mixed CASE nested reply");XCTAssertEqual(grandchild.hasMoreReplies,false)
+    }
     func testReportedCommentIsRedactedAndCountIsReturned() throws {
         struct Fixture:Decodable {let response:Reported;let page:CommentPage}
         let fixture=try JSONDecoder().decode(Fixture.self,from:Data(contentsOf:Bundle.module.url(forResource:"report-hidden",withExtension:"json")!))

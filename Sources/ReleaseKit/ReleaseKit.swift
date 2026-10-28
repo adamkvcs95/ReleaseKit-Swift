@@ -96,6 +96,7 @@ private enum KeychainIdentity {
     func vote(type:String,id:String,value:Int) async throws -> VoteResult {try await client.vote(targetType:type,targetId:id,value:value)}
     func comments(version:String,cursor:String?=nil) async throws -> CommentPage {let page=try await client.comments(version:version,cursor:cursor);offline=await client.isOffline;return page}
     func acceptGuidelines() async throws {try await client.acceptGuidelines();await loadConfig()}
+    func replies(id:String,cursor:String?=nil) async throws -> CommentPage {try await client.replies(commentId:id,cursor:cursor)}
     func addComment(version:String,body:String,parentId:String?=nil) async throws {let comment=try await client.addComment(version:version,body:body,parentId:parentId);if let count=comment.releaseCommentCount {commentCounts[version]=count}}
     func report(id:String,version:String) async throws -> Reported {let result=try await client.report(commentId:id);if let count=result.releaseCommentCount {commentCounts[version]=count};return result}
     func block(id:String) async throws {try await client.block(commentId:id)}

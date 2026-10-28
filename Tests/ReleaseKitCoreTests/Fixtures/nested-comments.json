@@ -1,0 +1,81 @@
+{
+  "request": {
+    "body": "lowercase Mixed CASE nested reply",
+    "parentId": "c2"
+  },
+  "response": {
+    "id": "c3",
+    "body": "lowercase Mixed CASE nested reply",
+    "status": "visible"
+  },
+  "page": {
+    "items": [
+      {
+        "id": "c1",
+        "author": {
+          "kind": "anon",
+          "name": "Root Writer",
+          "tag": "AB12",
+          "verified": false,
+          "isMe": false
+        },
+        "body": "Root comment",
+        "createdAt": "2026-10-28T10:00:00Z",
+        "upCount": 0,
+        "downCount": 0,
+        "myVote": 0,
+        "status": "visible",
+        "removed": false,
+        "replies": [
+          {
+            "id": "c2",
+            "author": {
+              "kind": "anon",
+              "name": "Root Writer",
+              "tag": "AB12",
+              "verified": false,
+              "isMe": false
+            },
+            "body": "First reply",
+            "createdAt": "2026-10-28T10:00:00Z",
+            "upCount": 0,
+            "downCount": 0,
+            "myVote": 0,
+            "status": "visible",
+            "removed": false,
+            "replies": [
+              {
+                "id": "c3",
+                "author": {
+                  "kind": "anon",
+                  "name": "Root Writer",
+                  "tag": "AB12",
+                  "verified": false,
+                  "isMe": false
+                },
+                "body": "lowercase Mixed CASE nested reply",
+                "createdAt": "2026-10-28T10:00:00Z",
+                "upCount": 0,
+                "downCount": 0,
+                "myVote": 0,
+                "status": "visible",
+                "removed": false,
+                "replies": [],
+                "replyCount": 0,
+                "hasMoreReplies": false,
+                "repliesNextCursor": null
+              }
+            ],
+            "replyCount": 1,
+            "hasMoreReplies": false,
+            "repliesNextCursor": null
+          }
+        ],
+        "replyCount": 1,
+        "hasMoreReplies": false,
+        "repliesNextCursor": null
+      }
+    ],
+    "nextCursor": null
+  }
+}

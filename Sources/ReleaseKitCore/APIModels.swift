@@ -23,7 +23,7 @@ package struct ReleasesResponse: Decodable, Sendable { package let items:[Releas
 package struct APIErrorEnvelope: Decodable, Sendable { package struct Payload: Decodable, Sendable { package let code:String; package let message:String }; package let error:Payload }
 package struct Comment:Decodable,Identifiable,Sendable {
     package struct Author:Decodable,Sendable {package let kind:String;package let tag:String?;package let name:String?;package let verified:Bool?;package let isMe:Bool}
-    package let id:String;package let author:Author;package let body:String;package let createdAt:String;package let upCount:Int;package let downCount:Int;package let myVote:Int;package let status:String;package let replies:[Comment];package let replyCount:Int;package let releaseCommentCount:Int?;package let removed:Bool?
+    package let id:String;package let author:Author;package let body:String;package let createdAt:String;package let upCount:Int;package let downCount:Int;package let myVote:Int;package let status:String;package let replies:[Comment];package let replyCount:Int;package let releaseCommentCount:Int?;package let removed:Bool?;package let hasMoreReplies:Bool?;package let repliesNextCursor:String?
     package var isRemoved:Bool {removed==true || status=="hidden" || status=="deleted"}
 }
 package struct CommentPage:Decodable,Sendable {package let items:[Comment];package let nextCursor:String?}

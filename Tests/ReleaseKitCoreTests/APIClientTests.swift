@@ -28,6 +28,7 @@ private final class SDKProtocol:URLProtocol,@unchecked Sendable {
                 status=401;payload=["error":["code":"invalid_app_key","message":"Invalid headers"]]
             } else if request.url!.path.hasSuffix("/config") {payload=fixture["config"]!}
             else if request.url!.path.hasSuffix("/reports") {let report=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"report-hidden",withExtension:"json")!)) as! [String:Any];payload=report["response"]!}
+            else if request.url!.path.hasSuffix("/replies") {let nested=try JSONSerialization.jsonObject(with:Data(contentsOf:Bundle.module.url(forResource:"nested-comments",withExtension:"json")!)) as! [String:Any];let page=nested["page"] as! [String:Any];let root=(page["items"] as! [[String:Any]])[0];payload=["items":root["replies"]!,"nextCursor":NSNull()]}
             else if request.url!.path.hasSuffix("/events") {payload=[String:String]()}
             else if request.url!.path.hasSuffix("/guidelines/accept") {payload=["accepted":true]}
             else if request.url!.path.hasSuffix("/comments") {
@@ -93,6 +94,10 @@ final class APIClientTests:XCTestCase {
         let disk=ResponseCache(directory:root,scope:"\(base.absoluteString)|\(key)|\(anon)")
         let queued=try XCTUnwrap(disk.read("__events"));XCTAssertEqual((try JSONSerialization.jsonObject(with:queued.data) as! [Any]).count,50)
         TransportState.shared.set(id,"online");_=try await api.config();XCTAssertNil(disk.read("__events"))
+    }
+    func testLoadsRepliesWithNestedChildren() async throws {
+        let page=try await client().replies(commentId:"c1")
+        XCTAssertEqual(page.items.first?.id,"c2");XCTAssertEqual(page.items.first?.replies.first?.id,"c3");XCTAssertNil(page.nextCursor)
     }
     func testReportReturnsHiddenStatusAndAuthoritativeCount() async throws {
         let result=try await client().report(commentId:"c1")

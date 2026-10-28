@@ -17,10 +17,12 @@ The host Mac currently has no valid code-signing identities. The owner has not s
 
 ## Local verification, 2026-10-28
 
-- 99 backend/core tests pass, including the official Apple certificate vector at its documented valid date, real ECDSA assertion signatures, nonce reuse rejection and independent comment-vote gates.
-- 25 Swift tests pass, including shared signing contracts, ETag 304, disk isolation/expiry, offline fallback, HTTP denial eviction, no queued user writes and the bounded event queue.
+- 105 backend/core tests pass, including the official Apple certificate vector at its documented valid date, real ECDSA assertion signatures, nonce reuse rejection and independent comment-vote gates.
+- 27 Swift tests pass, including shared signing contracts, ETag 304, disk isolation/expiry, offline fallback, HTTP denial eviction, no queued user writes and the bounded event queue.
 - iOS library/demo compile with Swift 6.
 - Simulator: 3.9 first launch recorded without an update sheet; 4.0 presented automatically once; next launch skipped. Offline release history/comments and vote rollback verified through Device Hub.
 - Required-reason API review: no UserDefaults, file timestamps, disk capacity or system boot-time APIs added.
 
 - rc.5: report threshold, duplicate/concurrent reports, dismissed-report restoration, reply redaction and shared response contracts pass automated checks. iOS demo builds successfully.
+
+- rc.9: local simulator posts to a selected reply keep that exact parent and render two guides at depth two; lowercase and mixed-case input survives posting. Shared recursive fixtures, direct-child pagination, inaccessible ancestry and deep report redaction are covered by automated checks.

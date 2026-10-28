@@ -3,7 +3,7 @@
 ## 1.0.0-rc.9
 
 - Bind the comment composer sheet to an immutable composition request so the selected reply target is preserved on first presentation and after guidelines acceptance.
-- Keep replies to replies under the same top-level thread, while showing the selected reply’s author and excerpt in the composer. New top-level comments get a fresh target-free composer.
+- Preserve the exact reply parent at every level. Render nested replies with one indentation and vertical guide per ancestor; Load more replies pages through longer and deeper threads. Show the selected author and excerpt in the composer; new top-level comments get a fresh target-free composer.
 - Disable automatic capitalization and clear inherited text case on the comment editor.
 
 ## 1.0.0-rc.8

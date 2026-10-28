@@ -75,16 +75,22 @@ struct EngagementPill:ViewModifier {
 private struct CommentComposition:Identifiable {
     let id=UUID()
     let replyingTo:Comment?
-    let parentId:String?
-    init(replyingTo:Comment?,threadParentId:String?=nil){
-        self.replyingTo=replyingTo
-        self.parentId=replyingTo.map{threadParentId ?? $0.id}
-    }
+
+}
+
+private struct CommentThreadRow:Identifiable {
+    let comment:Comment;let depth:Int;var loadMore=false
+    var id:String {comment.id+(loadMore ? ":more":"")}
 }
 
 @MainActor struct ReleaseDetailView:View {
     let release:Release;let runtime:Runtime
     @State private var comments:[Comment]=[]
+    @State private var discussionRevision=UUID()
+    @State private var replyPages:[String:[Comment]]=[:]
+    @State private var replyCursors:[String:String]=[:]
+    @State private var loadedReplyParents:Set<String>=[]
+    @State private var loadingReplyParents:Set<String>=[]
     @State private var nextCursor:String?
     @State private var loading=true
     @State private var loadingMore=false
@@ -112,9 +118,14 @@ private struct CommentComposition:Identifiable {
                     if loading {ProgressView(String(localized:"Loading comments…",bundle:.module)).tint(.indigo)}
                     if failed {Text("Could not load comments.",bundle:.module).foregroundStyle(.secondary);Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}.tint(.indigo)}
                     if comments.isEmpty && !failed && !loading {Text("No comments yet.",bundle:.module).foregroundStyle(.secondary)}
-                    ForEach(comments){comment in
-                        commentRow(comment)
-                        ForEach(comment.replies){reply in commentRow(reply,isReply:true,threadParentId:comment.id)}
+                    ForEach(threadRows){row in
+                        if row.loadMore {
+                            Button(String(localized:"Load more replies",bundle:.module)){Task{await loadReplies(row.comment)}}
+                                .tint(.indigo).disabled(loadingReplyParents.contains(row.comment.id))
+                                .padding(.leading,CGFloat(row.depth+1)*12)
+                                .alignmentGuide(.listRowSeparatorLeading){_ in 0}
+                                .accessibilityIdentifier("releasekit.comment.more.\(row.comment.id)")
+                        } else {commentRow(row.comment,depth:row.depth)}
                     }
                     if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.tint(.indigo).disabled(loadingMore)}
                     if actionFailed {Text("This action could not be completed.",bundle:.module).font(.caption).foregroundStyle(.secondary)}
@@ -162,7 +173,7 @@ private struct CommentComposition:Identifiable {
                 .toolbar{ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){showGuidelines=false}}}
         }.tint(.primary)
     }
-    private func commentRow(_ comment:Comment,isReply:Bool=false,threadParentId:String?=nil)->some View {
+    private func commentRow(_ comment:Comment,depth:Int=0)->some View {
         let removed=comment.isRemoved || hiddenIDs.contains(comment.id)
         return VStack(alignment:.leading,spacing:8) {
             HStack {
@@ -187,7 +198,7 @@ private struct CommentComposition:Identifiable {
                             VoteControl(runtime:runtime,type:"comment",id:comment.id,up:comment.upCount,down:comment.downCount,selected:comment.myVote,compact:true)
                         }
                         Spacer(minLength:0)
-                        Button {startCompose(replyingTo:comment,threadParentId:threadParentId)} label:{
+                        Button {startCompose(replyingTo:comment)} label:{
                             Label(String(localized:"Reply",bundle:.module),systemImage:"arrowshape.turn.up.left")
                                 .font(.subheadline).frame(minWidth:44,minHeight:44).contentShape(Rectangle())
                         }
@@ -200,11 +211,12 @@ private struct CommentComposition:Identifiable {
             }
         }
         .padding(.vertical,4)
-        .padding(.leading,isReply ? 16:0)
+        .padding(.leading,CGFloat(depth)*12)
         .overlay(alignment:.leading) {
-            if isReply {
-                RoundedRectangle(cornerRadius:1).fill(Color.secondary.opacity(0.3))
-                    .frame(width:2).padding(.vertical,8).accessibilityHidden(true)
+            if depth>0 {
+                HStack(spacing:10) {
+                    ForEach(0..<depth,id:\.self){_ in RoundedRectangle(cornerRadius:1).fill(Color.secondary.opacity(0.3)).frame(width:2)}
+                }.padding(.vertical,8).accessibilityHidden(true).allowsHitTesting(false)
             }
         }
         .alignmentGuide(.listRowSeparatorLeading){_ in 0}
@@ -230,16 +242,42 @@ private struct CommentComposition:Identifiable {
             reportedIDs.insert(comment.id);await refresh();reportSubmitted=true
         } catch {actionFailed=true}
     }
-    private func startCompose(replyingTo comment:Comment?=nil,threadParentId:String?=nil){
+    private func startCompose(replyingTo comment:Comment?=nil){
         actionFailed=false
-        let request=CommentComposition(replyingTo:comment,threadParentId:threadParentId)
+        let request=CommentComposition(replyingTo:comment)
         if runtime.config?.me.guidelinesAccepted == true {composition=request}
         else {pendingComposition=request;showGuidelines=true}
+    }
+    private var threadRows:[CommentThreadRow] {
+        var rows:[CommentThreadRow]=[]
+        func append(_ nodes:[Comment],depth:Int,ancestors:Set<String>){
+            for comment in nodes where !ancestors.contains(comment.id) {
+                rows.append(CommentThreadRow(comment:comment,depth:depth))
+                let children=replyPages[comment.id] ?? comment.replies
+                append(children,depth:depth+1,ancestors:ancestors.union([comment.id]))
+                let more=loadedReplyParents.contains(comment.id) ? replyCursors[comment.id] != nil : (comment.hasMoreReplies ?? (comment.replyCount>children.count))
+                if more {rows.append(CommentThreadRow(comment:comment,depth:depth,loadMore:true))}
+            }
+        }
+        append(comments,depth:0,ancestors:[]);return rows
+    }
+    private func loadReplies(_ comment:Comment) async {
+        guard !loadingReplyParents.contains(comment.id) else{return}
+        loadingReplyParents.insert(comment.id);defer{loadingReplyParents.remove(comment.id)}
+        let revision=discussionRevision
+        let cursor=loadedReplyParents.contains(comment.id) ? replyCursors[comment.id] : (comment.repliesNextCursor ?? (comment.hasMoreReplies == nil ? comment.replies.last?.id:nil))
+        do {
+            let page=try await runtime.replies(id:comment.id,cursor:cursor)
+            guard revision==discussionRevision else{return}
+            let previous=replyPages[comment.id] ?? comment.replies,ids=Set(previous.map(\.id))
+            replyPages[comment.id]=previous+page.items.filter{!ids.contains($0.id)}
+            loadedReplyParents.insert(comment.id);replyCursors[comment.id]=page.nextCursor;actionFailed=false
+        } catch {actionFailed=true}
     }
     private func refresh() async {
         guard commentsEnabled else{loading=false;return}
         guard !loadingMore else{return}
-        do{let page=try await runtime.comments(version:release.version);comments=page.items;nextCursor=page.nextCursor;failed=false}catch{failed=true}
+        do{let page=try await runtime.comments(version:release.version);comments=page.items;discussionRevision=UUID();replyPages=[:];replyCursors=[:];loadedReplyParents=[];nextCursor=page.nextCursor;failed=false}catch{failed=true}
         loading=false
     }
     private func loadMore() async {
@@ -282,7 +320,7 @@ private struct CommentComposition:Identifiable {
     }
     private func post() async {
         sending=true;error=nil;defer{sending=false}
-        do{try await runtime.addComment(version:version,body:text,parentId:request.parentId);onSaved();dismiss()}
+        do{try await runtime.addComment(version:version,body:text,parentId:request.replyingTo?.id);onSaved();dismiss()}
         catch ReleaseKitNetworkError.server(let code) {
             switch code {
             case "rate_limited":error=String(localized:"Too many comments. Please try again later.",bundle:.module)

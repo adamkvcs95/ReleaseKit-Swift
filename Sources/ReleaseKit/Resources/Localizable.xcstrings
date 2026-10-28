@@ -1008,6 +1008,22 @@
           }
         }
       }
+    },
+    "Load more replies": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Load more replies"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "További válaszok"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
