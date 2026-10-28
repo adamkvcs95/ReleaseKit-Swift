@@ -128,7 +128,7 @@ private struct WhatsNewSheet:View {
     @Environment(\.dismiss) private var dismiss
     @State private var didPresent=false
     let release:Release;let runtime:Runtime;let onPresent:()->Void
-    var body:some View {NavigationStack {VStack(alignment:.leading,spacing:16){Text("What's New",bundle:.module).font(.title2.bold());Text(release.version).font(.subheadline).foregroundStyle(.secondary);ScrollView {Text(release.notes).frame(maxWidth:.infinity,alignment:.leading).textSelection(.enabled)};if runtime.config?.features.votes == true {VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)};Button(String(localized:"Continue",bundle:.module)){dismiss()}.buttonStyle(.borderedProminent).frame(maxWidth:.infinity);NavigationLink(String(localized:"All updates",bundle:.module)){ReleaseKitChangelogView()}.frame(maxWidth:.infinity)}.padding().toolbar{ToolbarItem(placement:.topBarTrailing){Menu {if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)};if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}}label:{Image(systemName:"ellipsis.circle").accessibilityLabel("More")}}}.onAppear{if !didPresent {didPresent=true;onPresent()}}.onDisappear{runtime.releasePresentation()}}}
+    var body:some View {NavigationStack {VStack(alignment:.leading,spacing:16){Text("What's New",bundle:.module).font(.title2.bold());Text(release.version).font(.subheadline).foregroundStyle(.secondary);ScrollView {Text(release.notes).frame(maxWidth:.infinity,alignment:.leading).textSelection(.enabled)};if runtime.config?.features.votes == true {VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)};Button(String(localized:"Continue",bundle:.module)){dismiss()}.buttonStyle(.borderedProminent).frame(maxWidth:.infinity);NavigationLink(String(localized:"All updates",bundle:.module)){ReleaseKitChangelogView()}.frame(maxWidth:.infinity)}.padding().toolbar{ToolbarItem(placement:.topBarTrailing){Menu {if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)};if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}}label:{Image(systemName:"ellipsis.circle").accessibilityLabel("More")}}}.tint(.indigo).onAppear{if !didPresent {didPresent=true;onPresent()}}.onDisappear{runtime.releasePresentation()}}}
 }
 
 /// Native release history with in-app up/down votes. Embed in a NavigationStack,
@@ -207,6 +207,7 @@ private struct WhatsNewSheet:View {
                 .refreshable{await refresh()}
             }
         }
+        .tint(.indigo)
         .navigationTitle(String(localized:"What's New",bundle:.module))
         .navigationBarTitleDisplayMode(.inline)
         .task{await refresh()}
@@ -233,14 +234,18 @@ private struct WhatsNewSheet:View {
 public extension View {
     /// Presents a native changelog sheet with its own navigation and close button.
     @MainActor func releaseKitChangelog(isPresented:Binding<Bool>)->some View {
-        sheet(isPresented:isPresented){NavigationStack{ReleaseKitChangelogView().toolbar{ToolbarItem(placement:.confirmationAction){Button(String(localized:"Done",bundle:.module)){isPresented.wrappedValue=false}}}}}
+        sheet(isPresented:isPresented){
+            NavigationStack {
+                ReleaseKitChangelogView().toolbar{ToolbarItem(placement:.confirmationAction){Button(String(localized:"Done",bundle:.module)){isPresented.wrappedValue=false}}}
+            }.tint(.indigo)
+        }
     }
 }
 
 public struct ReleaseKitSettingsLink<Label:View>:View {
     private let label:Label
     public init(@ViewBuilder label:()->Label){self.label=label()}
-    public var body:some View {NavigationLink {ReleaseKitChangelogView()} label:{label}}
+    public var body:some View {NavigationLink {ReleaseKitChangelogView()} label:{label}.tint(.indigo)}
 }
 public extension ReleaseKitSettingsLink where Label == SwiftUI.Label<Text,Image> {
     init(){self.init{SwiftUI.Label(String(localized:"What's New",bundle:.module),systemImage:"sparkles")}}

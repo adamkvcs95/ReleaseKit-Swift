@@ -3,6 +3,7 @@
 ## 1.0.0-rc.2
 
 - Reference-inspired outlined vote capsule using arrowtriangle.up/down, a shared net score and a vertical divider.
+- Selected vote triangles use filled SF Symbols; SDK controls and badges consistently use indigo.
 - Adjacent outlined comment-count capsule in changelog previews.
 - Consistent voting appearance in previews, release details, automatic What's New and comments; 44-point tap targets and selected-state accessibility preserved.
 

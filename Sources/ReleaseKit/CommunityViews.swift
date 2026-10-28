@@ -36,14 +36,14 @@ struct EngagementPill:ViewModifier {
         Button {Task{await submit(value)}} label:{
             HStack(spacing:8) {
                 if busy && value == -1 {ProgressView().controlSize(.small).frame(width:compact ? 19:21,height:24)}
-                else {Image(systemName:value==1 ? "arrowtriangle.up":"arrowtriangle.down").font(.system(size:compact ? 17:19,weight:.medium)).frame(width:compact ? 19:21,height:compact ? 22:24)}
+                else {Image(systemName:(value==1 ? "arrowtriangle.up":"arrowtriangle.down")+(state.selected==value ? ".fill":"")).font(.system(size:compact ? 17:19,weight:.medium)).frame(width:compact ? 19:21,height:compact ? 22:24)}
                 if value==1 {
                     Text("\(state.upCount-state.downCount)").font(compact ? .subheadline.weight(.semibold):.body.weight(.semibold)).monospacedDigit()
-                        .foregroundStyle(state.selected==0 ? Color.primary:Color.accentColor)
+                        .foregroundStyle(state.selected==0 ? Color.primary:Color.indigo)
                 }
             }
             .padding(.horizontal,12).frame(minWidth:44,minHeight:44)
-            .foregroundStyle(state.selected==value ? Color.accentColor:Color.primary)
+            .foregroundStyle(state.selected==value ? Color.indigo:Color.primary)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain).disabled(busy)
@@ -66,8 +66,8 @@ struct EngagementPill:ViewModifier {
         if let badge=ReleaseBadge.resolve(version:version,installed:runtime.installedVersion,latest:runtime.config?.app.latestVersion) {
             Text(badge == .installed ? String(localized:"Installed",bundle:.module):String(localized:"Latest",bundle:.module))
                 .font(.caption2.weight(.semibold)).padding(.horizontal,8).padding(.vertical,4)
-                .foregroundStyle(badge == .installed ? Color.green:Color.accentColor)
-                .background((badge == .installed ? Color.green:Color.accentColor).opacity(0.12),in:Capsule())
+                .foregroundStyle(Color.indigo)
+                .background((Color.indigo).opacity(0.12),in:Capsule())
         }
     }
 }
@@ -131,6 +131,7 @@ struct EngagementPill:ViewModifier {
                     .accessibilityIdentifier("releasekit.release.menu")
             }
         }
+        .tint(.indigo)
         .task{await refresh()}.refreshable{await refresh()}
         .sheet(isPresented:$showGuidelines,onDismiss:{if agreed {agreed=false;showCompose=true}}){guidelines}
         .sheet(isPresented:$showCompose){ComposeComment(runtime:runtime,version:release.version,parentId:replyTo,onSaved:{Task{await refresh()}})}
@@ -149,7 +150,7 @@ struct EngagementPill:ViewModifier {
                 Spacer()
             }.padding().navigationTitle(String(localized:"Community guidelines",bundle:.module)).navigationBarTitleDisplayMode(.inline)
                 .toolbar{ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){showGuidelines=false}}}
-        }
+        }.tint(.indigo)
     }
     private func commentRow(_ comment:Comment)->some View {
         VStack(alignment:.leading,spacing:8) {
@@ -207,7 +208,7 @@ struct EngagementPill:ViewModifier {
                 ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){dismiss()}.disabled(sending)}
                 ToolbarItem(placement:.confirmationAction){Button {Task{await post()}} label:{if sending {ProgressView()}else{Text("Post",bundle:.module)}}.disabled(sending || text.trimmingCharacters(in:.whitespacesAndNewlines).count<2 || text.count>1000).accessibilityIdentifier("releasekit.comment.post")}
             }
-        }
+        }.tint(.indigo)
     }
     private func post() async {
         sending=true;error=nil;defer{sending=false}
