@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.10
+
+- Connect native comment thread guides across adjacent reply rows and Load more replies rows. Keep content padding inside the full-height guides, preserving comment separators and adaptive colors.
+
 ## 1.0.0-rc.9
 
 - Bind the comment composer sheet to an immutable composition request so the selected reply target is preserved on first presentation and after guidelines acceptance.

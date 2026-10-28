@@ -11,6 +11,23 @@ struct EngagementPill:ViewModifier {
     }
 }
 
+private struct CommentThreadGuides:ViewModifier {
+    let depth:Int
+    func body(content:Content)->some View {
+        content.padding(.leading,CGFloat(depth)*12)
+            .overlay(alignment:.leading) {
+                if depth>0 {
+                    HStack(spacing:10) {
+                        ForEach(0..<depth,id:\.self){_ in Rectangle().fill(Color.secondary.opacity(0.3)).frame(width:2)}
+                    }.accessibilityHidden(true).allowsHitTesting(false)
+                }
+            }
+            .listRowInsets(EdgeInsets(top:0,leading:16,bottom:0,trailing:16))
+            .alignmentGuide(.listRowSeparatorLeading){_ in 0}
+            .alignmentGuide(.listRowSeparatorTrailing){dimensions in dimensions.width}
+    }
+}
+
 @MainActor struct VoteControl:View {
     let runtime:Runtime;let type:String;let id:String
     private let initialState:VoteState
@@ -122,8 +139,8 @@ private struct CommentThreadRow:Identifiable {
                         if row.loadMore {
                             Button(String(localized:"Load more replies",bundle:.module)){Task{await loadReplies(row.comment)}}
                                 .tint(.indigo).disabled(loadingReplyParents.contains(row.comment.id))
-                                .padding(.leading,CGFloat(row.depth+1)*12)
-                                .alignmentGuide(.listRowSeparatorLeading){_ in 0}
+                                .padding(.vertical,12)
+                                .modifier(CommentThreadGuides(depth:row.depth+1))
                                 .accessibilityIdentifier("releasekit.comment.more.\(row.comment.id)")
                         } else {commentRow(row.comment,depth:row.depth)}
                     }
@@ -132,6 +149,7 @@ private struct CommentThreadRow:Identifiable {
                 } else {Text("Comments are disabled for this app.",bundle:.module).foregroundStyle(.secondary)}
             }
         }
+        .listRowSpacing(0)
         .navigationTitle(release.version).navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if commentsEnabled {
@@ -210,17 +228,8 @@ private struct CommentThreadRow:Identifiable {
                 if comment.status=="pending" {Label(String(localized:"Awaiting review",bundle:.module),systemImage:"clock").font(.caption).foregroundStyle(.secondary)}
             }
         }
-        .padding(.vertical,4)
-        .padding(.leading,CGFloat(depth)*12)
-        .overlay(alignment:.leading) {
-            if depth>0 {
-                HStack(spacing:10) {
-                    ForEach(0..<depth,id:\.self){_ in RoundedRectangle(cornerRadius:1).fill(Color.secondary.opacity(0.3)).frame(width:2)}
-                }.padding(.vertical,8).accessibilityHidden(true).allowsHitTesting(false)
-            }
-        }
-        .alignmentGuide(.listRowSeparatorLeading){_ in 0}
-        .alignmentGuide(.listRowSeparatorTrailing){dimensions in dimensions.width}
+        .padding(.vertical,12)
+        .modifier(CommentThreadGuides(depth:depth))
         .accessibilityElement(children:.contain).contextMenu {
             if !removed && !comment.author.isMe {commentActions(comment)}
         }
