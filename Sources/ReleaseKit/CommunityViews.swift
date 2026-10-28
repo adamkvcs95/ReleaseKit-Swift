@@ -66,8 +66,8 @@ struct EngagementPill:ViewModifier {
         if let badge=ReleaseBadge.resolve(version:version,installed:runtime.installedVersion,latest:runtime.config?.app.latestVersion) {
             Text(badge == .installed ? String(localized:"Installed",bundle:.module):String(localized:"Latest",bundle:.module))
                 .font(.caption2.weight(.semibold)).padding(.horizontal,8).padding(.vertical,4)
-                .foregroundStyle(Color.indigo)
-                .background((Color.indigo).opacity(0.12),in:Capsule())
+                .foregroundStyle(badge == .installed ? Color.green:Color.indigo)
+                .background((badge == .installed ? Color.green:Color.indigo).opacity(0.12),in:Capsule())
         }
     }
 }

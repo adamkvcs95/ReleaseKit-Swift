@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.3
+
+- Restore green styling for the Installed badge; Latest and other SDK accents remain indigo.
+
 ## 1.0.0-rc.2
 
 - Reference-inspired outlined vote capsule using arrowtriangle.up/down, a shared net score and a vertical divider.
