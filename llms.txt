@@ -1,13 +1,10 @@
 # ReleaseKit-Swift
 
-> Zero-dependency Swift package (iOS 17+) that shows an automatic "What's new" sheet and an in-app changelog with votes and comments, powered by App Store release notes via releasek.it.
+Native iOS 17+ changelog with release voting. Swift 6, no third-party dependencies. Development preview, branch main; no stable 1.0.0 release.
 
-## Docs
-- [AGENTS.md](AGENTS.md): one-shot integration steps for coding agents (add package, configure, modifier, settings link, verify)
-- [README.md](README.md): overview, privacy label answers, configuration options
-
-## Minimal integration
-- Package URL: https://github.com/<OWNER>/ReleaseKit-Swift (from: 1.0.0), product `ReleaseKit`
-- `ReleaseKit.configure(appKey: "rk_pub_...")` in `App.init`
-- `.releaseKitWhatsNew()` on the root view
-- `ReleaseKitSettingsLink()` in Settings
+- Package: https://github.com/adamkvcs95/ReleaseKit-Swift
+- Configure once: ReleaseKit.configure(appKey: "rk_pub_…")
+- Sheet: .releaseKitChangelog(isPresented: $showUpdates)
+- Navigation: ReleaseKitChangelogView() / ReleaseKitSettingsLink()
+- Full instructions: README.md and AGENTS.md
+- Offline cache and App Attest are not implemented; comments remain experimental and disabled in production.

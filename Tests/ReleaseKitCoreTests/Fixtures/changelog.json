@@ -1,0 +1,11 @@
+{
+  "config": {
+    "app":{"id":"app1","slug":"my-app","name":"My App","iconUrl":null,"latestVersion":"4.0","changelogUrl":"https://example.test/my-app","ideasUrl":null},
+    "developer":{"name":"Developer","contactEmail":"dev@example.test","contactUrl":null},
+    "features":{"comments":false,"votes":true,"ideas":false,"attestation":"off"},
+    "branding":{"showPoweredBy":true},
+    "legal":{"guidelinesUrl":"https://example.test/legal/community-guidelines","termsUrl":"https://example.test/legal/terms","privacyUrl":"https://example.test/legal/privacy"},
+    "me":{"guidelinesAccepted":false,"banned":false,"verified":false}
+  },
+  "releases":{"items":[{"id":"rel1","version":"4.0","releaseDate":"2026-10-26T10:00:00Z","notes":"A faster, simpler app.","notesCountry":"us","upCount":0,"downCount":0,"commentCount":0,"myVote":0,"url":"https://example.test/my-app/4.0"}],"nextCursor":"next-page"}
+}

@@ -16,7 +16,7 @@ package actor APIClient {
         guard let url=components.url else {throw ReleaseKitNetworkError.invalidURL}
         var request=URLRequest(url:url,timeoutInterval:10)
         if let body {request.httpMethod="POST";request.httpBody=body;request.setValue("application/json",forHTTPHeaderField:"Content-Type")}
-        request.setValue(appKey,forHTTPHeaderField:"X-RK-App-Key");request.setValue(anonID,forHTTPHeaderField:"X-RK-Anon-Id");request.setValue("ios/1.0.0",forHTTPHeaderField:"X-RK-SDK")
+        request.setValue(appKey,forHTTPHeaderField:"X-RK-App-Key");request.setValue(anonID,forHTTPHeaderField:"X-RK-Anon-Id");request.setValue("ios/0.1.0-dev",forHTTPHeaderField:"X-RK-SDK")
         request.setValue(Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "",forHTTPHeaderField:"X-RK-App-Version")
         request.setValue(Locale.preferredLanguages.prefix(3).joined(separator:", "),forHTTPHeaderField:"Accept-Language")
         let region:String?
@@ -40,7 +40,7 @@ package actor APIClient {
     }
     package func config() async throws -> AppConfig {try await request("api/v1/sdk/config")}
     package func whatsNew(version:String) async throws -> WhatsNewResponse {try await request("api/v1/sdk/whats-new",query:[URLQueryItem(name:"version",value:version)])}
-    package func releases() async throws -> ReleasesResponse {try await request("api/v1/sdk/releases")}
+    package func releases(cursor:String?=nil) async throws -> ReleasesResponse {try await request("api/v1/sdk/releases",query:cursor.map{[URLQueryItem(name:"cursor",value:$0)]} ?? [])}
     private func post<Payload:Encodable & Sendable,Response:Decodable & Sendable>(_ path:String,_ payload:Payload) async throws -> Response {try await request(path,body:JSONEncoder().encode(payload))}
     private struct Vote:Encodable,Sendable {let targetType:String;let targetId:String;let value:Int}
     private struct Content:Encodable,Sendable {let body:String;let parentId:String?;let locale:String?}

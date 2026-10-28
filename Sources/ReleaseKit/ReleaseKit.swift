@@ -74,6 +74,10 @@ private enum KeychainIdentity {
     func reset(){state=LocalState();save()}
     func loadConfig() async {do {config=try await client.config()} catch {if options.logLevel != .off {Logger(subsystem:"it.releasek.sdk",category:"network").warning("Unable to load configuration.")}}}
     func releases() async throws->[Release] {try await client.releases().items}
+    func changelog(cursor:String?=nil) async throws->ReleasesResponse {
+        if cursor == nil {config=try await client.config()}
+        return try await client.releases(cursor:cursor)
+    }
     func vote(type:String,id:String,value:Int) async throws -> VoteResult {try await client.vote(targetType:type,targetId:id,value:value)}
     func comments(version:String) async throws -> [Comment] {try await client.comments(version:version).items}
     func acceptGuidelines() async throws {try await client.acceptGuidelines();await loadConfig()}
@@ -112,14 +116,93 @@ private struct WhatsNewSheet:View {
     var body:some View {NavigationStack {VStack(alignment:.leading,spacing:16){Text("What's New",bundle:.module).font(.title2.bold());Text(release.version).font(.subheadline).foregroundStyle(.secondary);ScrollView {Text(release.notes).frame(maxWidth:.infinity,alignment:.leading).textSelection(.enabled)};if runtime.config?.features.votes == true {VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)};Button(String(localized:"Continue",bundle:.module)){dismiss()}.buttonStyle(.borderedProminent).frame(maxWidth:.infinity);NavigationLink(String(localized:"All updates",bundle:.module)){ReleaseKitChangelogView()}.frame(maxWidth:.infinity)}.padding().toolbar{ToolbarItem(placement:.topBarTrailing){Menu {if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)};if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}}label:{Image(systemName:"ellipsis.circle").accessibilityLabel("More")}}}.onAppear{if !didPresent {didPresent=true;onPresent()}}}}
 }
 
-public struct ReleaseKitChangelogView:View {
+/// Native release history with in-app up/down votes. Embed in a NavigationStack,
+/// or use `.releaseKitChangelog(isPresented:)` for a self-contained sheet.
+@MainActor public struct ReleaseKitChangelogView:View {
     @State private var releases:[Release]=[]
     @State private var isLoading=true
     @State private var failed=false
+    @State private var loadingMore=false
+    @State private var nextCursor:String?
     public init(){}
-    public var body:some View {Group {if isLoading {ProgressView()} else if releases.isEmpty {ContentUnavailableView(String(localized:"No updates yet",bundle:.module),systemImage:"sparkles",description:Text(failed ? "Unable to load updates right now." : ""))} else {List(releases){release in NavigationLink {if let runtime=ReleaseKit.runtime {ReleaseDetailView(release:release,runtime:runtime)}} label:{VStack(alignment:.leading,spacing:8){Text(release.version).font(.headline);Text(release.notes).lineLimit(4).foregroundStyle(.secondary)}}}}}.navigationTitle(String(localized:"What's New",bundle:.module)).task{await refresh()}.refreshable{await refresh()}}
-    @MainActor private func refresh() async {guard let runtime=ReleaseKit.runtime else{isLoading=false;return};do{releases=try await runtime.releases();failed=false}catch{failed=true};isLoading=false}
+    public var body:some View {
+        Group {
+            if ReleaseKit.runtime == nil {
+                ContentUnavailableView(String(localized:"ReleaseKit is not configured",bundle:.module),systemImage:"gearshape",description:Text("Configure ReleaseKit with your app key before opening the changelog.",bundle:.module))
+            } else if isLoading {
+                ProgressView(String(localized:"Loading updates…",bundle:.module)).frame(maxWidth:.infinity,maxHeight:.infinity)
+            } else if releases.isEmpty {
+                ContentUnavailableView {
+                    Label(String(localized:failed ? "Unable to load updates":"No updates yet",bundle:.module),systemImage:failed ? "wifi.exclamationmark":"sparkles")
+                } description:{
+                    Text(failed ? String(localized:"Check your connection and try again.",bundle:.module):String(localized:"New releases will appear here.",bundle:.module))
+                } actions:{Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}
+            } else if let runtime=ReleaseKit.runtime {
+                ScrollView {
+                    LazyVStack(alignment:.leading,spacing:18) {
+                        if let config=runtime.config {
+                            HStack(spacing:12) {
+                                if let icon=config.app.iconUrl {AsyncImage(url:icon){image in image.resizable().scaledToFill()}placeholder:{Color.secondary.opacity(0.1)}.frame(width:48,height:48).clipShape(RoundedRectangle(cornerRadius:12)).accessibilityHidden(true)}
+                                VStack(alignment:.leading,spacing:4){Text(config.app.name).font(.headline);Text("Latest updates and improvements",bundle:.module).font(.subheadline).foregroundStyle(.secondary)}
+                            }.padding(.vertical,8)
+                        }
+                        if failed {HStack {Text("Could not refresh updates.",bundle:.module).font(.caption);Spacer();Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}.foregroundStyle(.secondary)}
+                        ForEach(releases){release in
+                            VStack(alignment:.leading,spacing:16) {
+                                HStack(alignment:.firstTextBaseline) {
+                                    Text("Version \(release.version)",bundle:.module).font(.headline)
+                                    Spacer()
+                                    if let date=releaseDate(release.releaseDate){Text(date,format:.dateTime.month(.abbreviated).day().year()).font(.caption).foregroundStyle(.secondary)}
+                                }
+                                Text(release.notes.isEmpty ? String(localized:"Release notes are on their way.",bundle:.module):release.notes).font(.body).lineSpacing(4).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading)
+                                if runtime.config?.features.votes == true {
+                                    VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)
+                                        .id("\(release.id)-\(release.upCount)-\(release.downCount)-\(release.myVote)")
+                                }
+                            }
+                            .padding(20).frame(maxWidth:.infinity,alignment:.leading)
+                            .background(Color(uiColor:.secondarySystemGroupedBackground),in:RoundedRectangle(cornerRadius:20))
+                        }
+                        if nextCursor != nil {
+                            Button {Task{await loadMore()}} label:{if loadingMore {ProgressView()}else{Text("Load more updates",bundle:.module)}}.disabled(loadingMore).frame(maxWidth:.infinity,minHeight:44)
+                        }
+                        if runtime.config?.branding.showPoweredBy == true {Link(String(localized:"Powered by ReleaseKit",bundle:.module),destination:URL(string:"https://releasek.it")!).font(.caption).foregroundStyle(.secondary).frame(maxWidth:.infinity).padding(.top,6)}
+                    }.padding(20)
+                }
+                .background(Color(uiColor:.systemGroupedBackground))
+                .refreshable{await refresh()}
+            }
+        }
+        .navigationTitle(String(localized:"What's New",bundle:.module))
+        .navigationBarTitleDisplayMode(.inline)
+        .task{await refresh()}
+        .accessibilityIdentifier("releasekit.changelog")
+    }
+    private func releaseDate(_ raw:String)->Date? {
+        let parser=ISO8601DateFormatter()
+        if let date=parser.date(from:raw){return date}
+        parser.formatOptions.insert(.withFractionalSeconds)
+        return parser.date(from:raw)
+    }
+    private func refresh() async {
+        guard let runtime=ReleaseKit.runtime else{isLoading=false;return}
+        guard !loadingMore else{return}
+        do{let page=try await runtime.changelog();releases=page.items;nextCursor=page.nextCursor;failed=false}catch{failed=true}
+        isLoading=false
+    }
+    private func loadMore() async {
+        guard !loadingMore,let cursor=nextCursor,let runtime=ReleaseKit.runtime else{return}
+        loadingMore=true;defer{loadingMore=false}
+        do{let page=try await runtime.changelog(cursor:cursor);let ids=Set(releases.map(\.id));releases.append(contentsOf:page.items.filter{!ids.contains($0.id)});nextCursor=page.nextCursor;failed=false}catch{failed=true}
+    }
 }
+public extension View {
+    /// Presents a native changelog sheet with its own navigation and close button.
+    @MainActor func releaseKitChangelog(isPresented:Binding<Bool>)->some View {
+        sheet(isPresented:isPresented){NavigationStack{ReleaseKitChangelogView().toolbar{ToolbarItem(placement:.confirmationAction){Button(String(localized:"Done",bundle:.module)){isPresented.wrappedValue=false}}}}}
+    }
+}
+
 public struct ReleaseKitSettingsLink<Label:View>:View {
     private let label:Label
     public init(@ViewBuilder label:()->Label){self.label=label()}

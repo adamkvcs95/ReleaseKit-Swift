@@ -4,11 +4,41 @@ import ReleaseKitCore
 
 @MainActor struct VoteControl:View {
     let runtime:Runtime;let type:String;let id:String
-    @State private var up:Int;@State private var down:Int;@State private var selected:Int;@State private var busy=false;@State private var failed=false
-    init(runtime:Runtime,type:String,id:String,up:Int,down:Int,selected:Int){self.runtime=runtime;self.type=type;self.id=id;_up=State(initialValue:up);_down=State(initialValue:down);_selected=State(initialValue:selected)}
-    var body:some View {VStack(alignment:.leading){HStack{button(value:1,count:up,symbol:"hand.thumbsup");button(value:-1,count:down,symbol:"hand.thumbsdown")};if failed {Text(String(localized:"Could not save your vote.",bundle:.module)).font(.caption).foregroundStyle(.secondary)}}}
-    private func button(value:Int,count:Int,symbol:String)->some View {Button {Task{await submit(value)}} label:{Label("\(count)",systemImage:selected==value ? symbol+".fill":symbol).frame(minWidth:44,minHeight:44)}.disabled(busy).accessibilityLabel("\(value==1 ? "Upvote" : "Downvote"), \(count) votes\(selected==value ? ", selected" : "")")}
-    private func submit(_ value:Int) async {guard !busy else{return};busy=true;defer{busy=false};let next=selected==value ? 0:value;let old=(up,down,selected);if selected==1{up-=1};if selected == -1{down-=1};if next==1{up+=1};if next == -1{down+=1};selected=next;do{let result=try await runtime.vote(type:type,id:id,value:next);up=result.upCount;down=result.downCount;selected=result.myVote;failed=false}catch{(up,down,selected)=old;failed=true}}
+    @State private var state:VoteState
+    @State private var busy=false
+    @State private var failed=false
+    init(runtime:Runtime,type:String,id:String,up:Int,down:Int,selected:Int){self.runtime=runtime;self.type=type;self.id=id;_state=State(initialValue:VoteState(up:up,down:down,selected:selected))}
+    var body:some View {
+        VStack(alignment:.leading,spacing:8) {
+            HStack(spacing:10) {
+                button(value:1,count:state.upCount,symbol:"hand.thumbsup",label:String(localized:"Upvote",bundle:.module))
+                button(value:-1,count:state.downCount,symbol:"hand.thumbsdown",label:String(localized:"Downvote",bundle:.module))
+                if busy {ProgressView().controlSize(.small).accessibilityLabel(Text("Saving vote",bundle:.module))}
+            }
+            if failed {Text(String(localized:"Could not save your vote.",bundle:.module)).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("releasekit.vote.error")}
+        }
+    }
+    private func button(value:Int,count:Int,symbol:String,label:String)->some View {
+        Button {Task{await submit(value)}} label:{
+            Label("\(count)",systemImage:state.selected==value ? symbol+".fill":symbol)
+                .font(.subheadline.weight(.medium)).monospacedDigit()
+                .frame(minWidth:54,minHeight:44)
+                .padding(.horizontal,8)
+                .background(state.selected==value ? Color.accentColor.opacity(0.14):Color.secondary.opacity(0.08),in:RoundedRectangle(cornerRadius:12))
+                .foregroundStyle(state.selected==value ? Color.accentColor:Color.secondary)
+        }
+        .buttonStyle(.plain).disabled(busy)
+        .accessibilityLabel(label).accessibilityValue(String(count))
+        .accessibilityAddTraits(state.selected==value ? [.isSelected]:[])
+        .accessibilityHint(Text("Tap again to remove your vote",bundle:.module))
+        .accessibilityIdentifier("releasekit.vote.\(value==1 ? "up":"down").\(id)")
+    }
+    private func submit(_ value:Int) async {
+        guard !busy else{return};busy=true;failed=false;defer{busy=false}
+        let previous=state;let next=state.toggle(value)
+        do {let result=try await runtime.vote(type:type,id:id,value:next);state=VoteState(up:result.upCount,down:result.downCount,selected:result.myVote)}
+        catch {state=previous;failed=true}
+    }
 }
 
 @MainActor struct ReleaseDetailView:View {
