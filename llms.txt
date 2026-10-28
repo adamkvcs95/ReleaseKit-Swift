@@ -1,10 +1,12 @@
 # ReleaseKit-Swift
 
-Native iOS 17+ changelog with release voting. Swift 6, no third-party dependencies. Development preview, branch main; no stable 1.0.0 release.
+Native iOS 17+ changelog with compact previews, release details, voting and moderated comments. Swift 6, no third-party dependencies. Development preview, branch main; no stable 1.0.0 release.
 
 - Package: https://github.com/adamkvcs95/ReleaseKit-Swift
 - Configure once: ReleaseKit.configure(appKey: "rk_pub_…")
 - Sheet: .releaseKitChangelog(isPresented: $showUpdates)
 - Navigation: ReleaseKitChangelogView() / ReleaseKitSettingsLink()
 - Full instructions: README.md and AGENTS.md
-- Offline cache and App Attest are not implemented; comments remain experimental and disabled in production.
+- SDK comments use RK_ENABLE_SDK_COMMENTS and app settings; new posts await developer approval. Users receive stable app-scoped pseudonyms.
+- Installed/Latest badges compare the host bundle version with the server latestVersion.
+- Offline cache, comment voting and App Attest are not implemented.

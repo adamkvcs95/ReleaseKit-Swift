@@ -50,7 +50,7 @@ package actor APIClient {
     private struct Event:Encodable,Sendable {let type:String;let version:String?;let releaseId:String?}
     private struct Events:Encodable,Sendable {let events:[Event]}
     package func vote(targetType:String,targetId:String,value:Int) async throws -> VoteResult {try await post("api/v1/sdk/votes",Vote(targetType:targetType,targetId:targetId,value:value))}
-    package func comments(version:String) async throws -> CommentPage {try await request("api/v1/sdk/releases/\(version)/comments")}
+    package func comments(version:String,cursor:String?=nil) async throws -> CommentPage {try await request("api/v1/sdk/releases/\(version)/comments",query:cursor.map{[URLQueryItem(name:"cursor",value:$0)]} ?? [])}
     package func acceptGuidelines() async throws {let _:Accepted=try await post("api/v1/sdk/guidelines/accept",Empty())}
     package func addComment(version:String,body:String,parentId:String?=nil) async throws -> Comment {try await post("api/v1/sdk/releases/\(version)/comments",Content(body:body,parentId:parentId,locale:Locale.current.identifier))}
     package func report(commentId:String,reason:String) async throws {let _:Reported=try await post("api/v1/sdk/reports",Report(targetId:commentId,reason:reason))}

@@ -1,0 +1,23 @@
+{
+  "request": {
+    "body": "Thanks for the useful update!"
+  },
+  "response": {
+    "id": "c1",
+    "author": {
+      "kind": "anon",
+      "name": "Sunny Otter AB12",
+      "tag": "XYAB12",
+      "verified": false,
+      "isMe": true
+    },
+    "body": "Thanks for the useful update!",
+    "createdAt": "2026-10-28T10:00:00Z",
+    "upCount": 0,
+    "downCount": 0,
+    "myVote": 0,
+    "status": "pending",
+    "replies": [],
+    "replyCount": 0
+  }
+}

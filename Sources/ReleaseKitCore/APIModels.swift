@@ -6,7 +6,7 @@ package struct AppConfig: Decodable, Sendable {
     package struct Features: Decodable, Sendable { package let comments:Bool; package let votes:Bool; package let ideas:Bool; package let attestation:String }
     package struct Branding: Decodable, Sendable { package let showPoweredBy:Bool }
     package struct Legal: Decodable, Sendable { package let guidelinesUrl:URL; package let termsUrl:URL; package let privacyUrl:URL }
-    package struct Me: Decodable, Sendable { package let guidelinesAccepted:Bool; package let banned:Bool; package let verified:Bool }
+    package struct Me: Decodable, Sendable { package let displayName:String?; package let guidelinesAccepted:Bool; package let banned:Bool; package let verified:Bool }
     package let app:App; package let developer:Developer; package let features:Features; package let branding:Branding; package let legal:Legal; package let me:Me
 }
 package struct Release: Decodable, Identifiable, Sendable {

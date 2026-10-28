@@ -3,6 +3,12 @@ import XCTest
 @testable import ReleaseKitCore
 
 final class ContractTests:XCTestCase {
+    func testDecodesNamedPendingComment() throws {
+        struct Fixture:Decodable {let response:Comment}
+        let data=try Data(contentsOf:Bundle.module.url(forResource:"comments",withExtension:"json")!)
+        let comment=try JSONDecoder().decode(Fixture.self,from:data).response
+        XCTAssertEqual(comment.author.name,"Sunny Otter AB12");XCTAssertTrue(comment.author.isMe);XCTAssertEqual(comment.status,"pending")
+    }
     func testDecodesSharedVoteContract() throws {
         struct Fixture:Decodable {let response:VoteResult}
         let data=try Data(contentsOf:Bundle.module.url(forResource:"release-vote",withExtension:"json")!)

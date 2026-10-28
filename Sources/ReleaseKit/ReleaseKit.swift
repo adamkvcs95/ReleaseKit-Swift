@@ -65,6 +65,8 @@ private enum KeychainIdentity {
     private var state:LocalState
     private var fetching=false
     var config:AppConfig?
+    var voteStates:[String:VoteState]=[:]
+    var installedVersion:String? {Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String}
     init(appKey:String,identity:String,options:ReleaseKit.Options) {
         self.options=options;client=APIClient(baseURL:options.baseURL,appKey:appKey,anonID:identity);state=Self.loadState()
     }
@@ -76,10 +78,12 @@ private enum KeychainIdentity {
     func releases() async throws->[Release] {try await client.releases().items}
     func changelog(cursor:String?=nil) async throws->ReleasesResponse {
         if cursor == nil {config=try await client.config()}
-        return try await client.releases(cursor:cursor)
+        let page=try await client.releases(cursor:cursor)
+        for release in page.items {voteStates["release:\(release.id)"]=VoteState(up:release.upCount,down:release.downCount,selected:release.myVote)}
+        return page
     }
     func vote(type:String,id:String,value:Int) async throws -> VoteResult {try await client.vote(targetType:type,targetId:id,value:value)}
-    func comments(version:String) async throws -> [Comment] {try await client.comments(version:version).items}
+    func comments(version:String,cursor:String?=nil) async throws -> CommentPage {try await client.comments(version:version,cursor:cursor)}
     func acceptGuidelines() async throws {try await client.acceptGuidelines();await loadConfig()}
     func addComment(version:String,body:String,parentId:String?=nil) async throws {let _=try await client.addComment(version:version,body:body,parentId:parentId)}
     func report(id:String,reason:String) async throws {try await client.report(commentId:id,reason:reason)}
@@ -149,14 +153,21 @@ private struct WhatsNewSheet:View {
                         if failed {HStack {Text("Could not refresh updates.",bundle:.module).font(.caption);Spacer();Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}}.foregroundStyle(.secondary)}
                         ForEach(releases){release in
                             VStack(alignment:.leading,spacing:16) {
-                                HStack(alignment:.firstTextBaseline) {
-                                    Text("Version \(release.version)",bundle:.module).font(.headline)
-                                    Spacer()
-                                    if let date=releaseDate(release.releaseDate){Text(date,format:.dateTime.month(.abbreviated).day().year()).font(.caption).foregroundStyle(.secondary)}
-                                }
-                                Text(release.notes.isEmpty ? String(localized:"Release notes are on their way.",bundle:.module):release.notes).font(.body).lineSpacing(4).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading)
+                                NavigationLink {ReleaseDetailView(release:release,runtime:runtime)} label:{
+                                    VStack(alignment:.leading,spacing:10) {
+                                        HStack {
+                                            Text("Version \(release.version)",bundle:.module).font(.headline)
+                                            ReleaseVersionBadge(version:release.version,runtime:runtime)
+                                            Spacer()
+                                            Image(systemName:"chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                                        }
+                                        if let date=releaseDate(release.releaseDate){Text(date,format:.dateTime.month(.abbreviated).day().year()).font(.caption).foregroundStyle(.secondary)}
+                                        Text(release.notes.isEmpty ? String(localized:"Release notes are on their way.",bundle:.module):release.notes.split(whereSeparator:{$0.isWhitespace}).joined(separator:" "))
+                                            .font(.subheadline).foregroundStyle(.secondary).lineLimit(3).multilineTextAlignment(.leading).frame(maxWidth:.infinity,alignment:.leading)
+                                    }.contentShape(Rectangle())
+                                }.buttonStyle(.plain).accessibilityIdentifier("releasekit.release.\(release.id)")
                                 if runtime.config?.features.votes == true {
-                                    VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)
+                                    VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote,compact:true)
                                         .id("\(release.id)-\(release.upCount)-\(release.downCount)-\(release.myVote)")
                                 }
                             }

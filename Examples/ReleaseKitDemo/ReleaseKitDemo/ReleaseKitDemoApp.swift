@@ -6,7 +6,7 @@ import ReleaseKit
     init() {
         let key=Bundle.main.object(forInfoDictionaryKey:"ReleaseKitAppKey") as? String ?? "rk_pub_REPLACE_ME"
         let url=(Bundle.main.object(forInfoDictionaryKey:"ReleaseKitBaseURL") as? String).flatMap(URL.init(string:)) ?? URL(string:"https://releasek.it")!
-        ReleaseKit.configure(appKey:key,options:.init(baseURL:url,whatsNew:.init(isEnabled:false),comments:.init(isEnabled:false)))
+        ReleaseKit.configure(appKey:key,options:.init(baseURL:url,whatsNew:.init(isEnabled:false),comments:.init(isEnabled:true)))
         #if DEBUG
         _showChangelog=State(initialValue:ProcessInfo.processInfo.arguments.contains("--show-changelog"))
         #endif
