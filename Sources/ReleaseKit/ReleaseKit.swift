@@ -39,7 +39,7 @@ import ReleaseKitCore
         var top=root;while let presented=top.presentedViewController {top=presented}
         guard !(top is UIAlertController) else {runtime.releasePresentation();return}
         let controller=UIHostingController(rootView:WhatsNewSheet(release:release,runtime:runtime,onPresent:{runtime.markPresented(release.version)}))
-        if let sheet=controller.sheetPresentationController {sheet.detents=[.medium(),.large()];sheet.prefersGrabberVisible=true}
+        if let sheet=controller.sheetPresentationController {sheet.detents=[.custom(identifier:.init("releasekit.whatsnew")){context in context.maximumDetentValue*WhatsNewPresentation.heightFraction},.large()];sheet.prefersGrabberVisible=true}
         top.present(controller,animated:true)
     }
 }
@@ -117,7 +117,7 @@ private struct WhatsNewModifier:ViewModifier {
     let isEnabled:Bool;let onPresent:((String)->Void)?;let onDismiss:(()->Void)?
     func body(content:Content)->some View {
         content.task{await attempt()}.onChange(of:phase){_,newValue in if newValue == .active {Task{await attempt()}}}.sheet(item:$release,onDismiss:{ReleaseKit.runtime?.releasePresentation();onDismiss?()}){item in
-            if let runtime=ReleaseKit.runtime {WhatsNewSheet(release:item,runtime:runtime,onPresent:{runtime.markPresented(item.version);onPresent?(item.version)}).presentationDetents([.medium,.large]).presentationDragIndicator(.visible)}
+            if let runtime=ReleaseKit.runtime {WhatsNewSheet(release:item,runtime:runtime,onPresent:{runtime.markPresented(item.version);onPresent?(item.version)}).presentationDetents([.fraction(WhatsNewPresentation.heightFraction),.large]).presentationDragIndicator(.visible)}
         }
     }
     @MainActor private func attempt() async {guard isEnabled,release == nil,let runtime=ReleaseKit.runtime else{return};release=await runtime.prepareWhatsNew()}
@@ -126,11 +126,118 @@ public extension View {
     @MainActor func releaseKitWhatsNew(isEnabled:Bool=true,onPresent:((String)->Void)?=nil,onDismiss:(()->Void)?=nil)->some View {modifier(WhatsNewModifier(isEnabled:isEnabled,onPresent:onPresent,onDismiss:onDismiss))}
 }
 
+private enum WhatsNewPresentation {
+    static let heightFraction:CGFloat=0.65
+}
+
 private struct WhatsNewSheet:View {
     @Environment(\.dismiss) private var dismiss
     @State private var didPresent=false
-    let release:Release;let runtime:Runtime;let onPresent:()->Void
-    var body:some View {NavigationStack {VStack(alignment:.leading,spacing:16){Text("What's New",bundle:.module).font(.title2.bold());Text(release.version).font(.subheadline).foregroundStyle(.secondary);ScrollView {Text(release.notes).frame(maxWidth:.infinity,alignment:.leading).textSelection(.enabled)};if runtime.config?.features.votes == true {VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)};Button(String(localized:"Continue",bundle:.module)){dismiss()}.buttonStyle(.borderedProminent).tint(.blue).frame(maxWidth:.infinity);NavigationLink(String(localized:"All updates",bundle:.module)){ReleaseKitChangelogView()}.tint(.blue).frame(maxWidth:.infinity)}.padding().toolbar{ToolbarItem(placement:.topBarTrailing){Menu {if let email=runtime.config?.developer.contactEmail,let url=URL(string:"mailto:\(email)"){Link(String(localized:"Contact developer",bundle:.module),destination:url)};if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Community guidelines",bundle:.module),destination:url)}}label:{Image(systemName:"ellipsis.circle").accessibilityLabel("More")}}}.tint(.primary).onAppear{if !didPresent {didPresent=true;onPresent()}}.onDisappear{runtime.releasePresentation()}}}
+    let release:Release
+    let runtime:Runtime
+    let onPresent:()->Void
+
+    var body:some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment:.leading,spacing:16) {
+                    AsyncImage(url:runtime.config?.app.iconUrl) {phase in
+                        if let image=phase.image {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Image(systemName:"app.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .padding(14)
+                                .foregroundStyle(.secondary)
+                                .background(Color.secondary.opacity(0.1))
+                        }
+                    }
+                    .frame(width:64,height:64)
+                    .clipShape(RoundedRectangle(cornerRadius:15))
+                    .accessibilityHidden(true)
+                    Text("What's New",bundle:.module)
+                        .font(.title2.bold())
+                    Text(release.version)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text(release.notes)
+                        .frame(maxWidth:.infinity,alignment:.leading)
+                        .textSelection(.enabled)
+                    if runtime.config?.features.votes == true {
+                        VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)
+                            .padding(.top,4)
+                    }
+                }
+                .frame(maxWidth:.infinity,alignment:.leading)
+                .padding(20)
+            }
+            .safeAreaInset(edge:.bottom,spacing:0) {
+                continueButton
+                    .padding(.horizontal,20)
+                    .padding(.vertical,12)
+                    .background {
+                        Rectangle()
+                            .fill(.regularMaterial)
+                            .mask {
+                                LinearGradient(stops:[
+                                    .init(color:.clear,location:0),
+                                    .init(color:.black,location:0.45),
+                                    .init(color:.black,location:1)
+                                ],startPoint:.top,endPoint:.bottom)
+                            }
+                            .padding(.top,-36)
+                            .ignoresSafeArea(.container,edges:.bottom)
+                            .allowsHitTesting(false)
+                    }
+            }
+            .toolbar {
+                ToolbarItem(placement:.topBarTrailing) {
+                    NavigationLink {
+                        ReleaseKitChangelogView()
+                    } label: {
+                        Image(systemName:"arrow.up.forward")
+                    }
+                    .accessibilityLabel(Text("All updates",bundle:.module))
+                    .accessibilityIdentifier("releasekit.whatsnew.allUpdates")
+                }
+            }
+            .tint(.primary)
+            .onAppear {
+                if !didPresent {
+                    didPresent=true
+                    onPresent()
+                }
+            }
+            .onDisappear {runtime.releasePresentation()}
+        }
+    }
+
+    private var dismissButton:some View {
+        Button {dismiss()} label: {
+            Text("Continue",bundle:.module)
+                .font(.headline)
+                .frame(maxWidth:.infinity,minHeight:24)
+        }
+        .accessibilityIdentifier("releasekit.whatsnew.continue")
+    }
+
+    private var continueButton:some View {
+        Group {
+            #if compiler(>=6.2)
+            if #available(iOS 26.0,*) {
+                dismissButton.buttonStyle(.glassProminent)
+            } else {
+                dismissButton.buttonStyle(.borderedProminent)
+            }
+            #else
+            dismissButton.buttonStyle(.borderedProminent)
+            #endif
+        }
+        .controlSize(.large)
+        .buttonBorderShape(.capsule)
+        .tint(.blue)
+    }
 }
 
 /// Native release history with in-app up/down votes. Embed in a NavigationStack,

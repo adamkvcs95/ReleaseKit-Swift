@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.1
+
+- Fade in a real system-material backdrop blur behind Continue and extend it below the bottom safe area.
+
+- Show the app icon above the automatic What’s New title, and open the sheet at 65% height with an expandable large detent in SwiftUI and UIKit.
+
+- Place automatic What’s New release votes directly after the notes, within the scrollable content.
+- Replace its ellipsis menu and bottom All updates link with a top-right arrow.up.forward button opening the full changelog.
+- Pin a full-width Continue button in a bottom safe-area inset, using glassProminent on iOS 26+ and borderedProminent on earlier supported versions.
+
 ## 1.0.0
 
 - First stable release of the native changelog, automatic What’s New, release/comment voting, threaded comments, reporting, blocking, own-comment deletion and private offline read cache.

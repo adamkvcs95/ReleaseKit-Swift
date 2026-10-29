@@ -1,6 +1,6 @@
-# 1.0.0 release gate
+# 1.0.1 release gate
 
-Release: `1.0.0`. The owner approved stable changelog/community/offline scope on 2026-10-29, with App Attest disabled by default and explicitly experimental. This replaces the earlier requirement to verify App Attest before releasing the other features.
+Release: `1.0.1`. The owner approved stable changelog/community/offline scope on 2026-10-29, with App Attest disabled by default and explicitly experimental. This replaces the earlier requirement to verify App Attest before releasing the other features.
 
 ## Stable scope and publication requirements
 
@@ -10,6 +10,8 @@ Release: `1.0.0`. The owner approved stable changelog/community/offline scope on
 - Keep the installation guide, README, API docs, CHANGELOG and canonical fixtures consistent. No private credentials, local configuration or generated build products in Git.
 
 ## Recorded verification
+
+- 2026-10-29 (1.0.1): 30 local macOS Swift tests and a generic iOS Simulator library build pass. The signed simulator demo visually verifies the redesigned sheet with real Habitsy 1.1.24 and Today App 4.0 notes: app icon, inline votes, pinned full-width Continue and gradient-masked material extending under the home indicator. Both presentation paths offer 65% and large detents. Glass styling is compiler-guarded for older Xcode toolchains. The stable tag remains gated on the exact commit's CI matrix below.
 
 - 2026-10-29: 30 macOS Swift tests pass. The iOS simulator runs 32 tests, including public Options default `.disabled`, explicit experimental `.automatic`, unconfigured views, and the core contracts.
 - 2026-10-29: 121 backend/core/web tests pass, plus lint and typecheck. Ownership, signed DELETE/body binding/replay, report thresholds, deletion pruning, nested visibility, votes, caches and error handling are covered.

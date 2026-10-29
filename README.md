@@ -2,11 +2,11 @@
 
 Native changelog, automatic What's New, release/comment voting and community comments. iOS 17+, Swift 6, system frameworks only.
 
-**Stable version: 1.0.0.** App Attest is experimental, disabled by default and excluded from the stable feature scope. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for validation and remaining experimental checks.
+**Stable version: 1.0.1.** App Attest is experimental, disabled by default and excluded from the stable feature scope. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for validation and remaining experimental checks.
 
 ## Install
 
-Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select **Up to Next Major Version** from `1.0.0` (or **Exact Version** `1.0.0`), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
+Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select **Up to Next Major Version** from `1.0.1` (or **Exact Version** `1.0.1`), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
 
 ```swift
 import SwiftUI
@@ -36,6 +36,8 @@ Use `ReleaseKitSettingsLink()` or `ReleaseKitChangelogView()` inside an existing
 First install records the version without interrupting the user. A subsequent version change fetches that installed version's release notes and presents once. A downgrade is skipped; a release is marked handled only after its sheet appears. Hidden releases are skipped, unavailable notes retry on subsequent attempts with bounded pending-state lifetimes. State is stored separately for each endpoint/app key/installation. Concurrent presentation attempts are guarded.
 
 `Options.whatsNew` controls enabled state, delay, first-launch opt-in and debug force-show. The app's Info.plist `CFBundleShortVersionString` is the source of the installed version. The changelog uses three-line previews with 10-point spacing, Installed/Latest badges, dates, counts and outlined vote capsules (up triangle, net score, divider, down triangle; filled selection with blue accents) and a neighboring comment-count capsule; details show complete notes. Toolbar actions use adaptive primary colors (dark in light mode, light in dark mode); content accents remain blue and Installed stays green. The top ellipsis menu opens Community guidelines and Contact developer. The bottom-right square.and.pencil icon opens comment composition. There is no detail footer branding.
+
+The automatic What's New sheet shows the app icon above its title and opens at a 65% presentation detent, expandable to large in both SwiftUI and UIKit. It places release votes immediately after the notes in the scrollable content. Its top-right `arrow.up.forward` button opens the full changelog. Continue stays pinned in a bottom safe-area inset as a full-width Liquid Glass prominent button on iOS 26+, with a bordered prominent fallback on iOS 17–25 or when built with an older Swift compiler. The footer blurs the content behind it using a gradient-masked system material, fading in above Continue and extending under the bottom safe area. The sheet has no ellipsis menu or separate All updates link at the bottom.
 
 ## Community
 
