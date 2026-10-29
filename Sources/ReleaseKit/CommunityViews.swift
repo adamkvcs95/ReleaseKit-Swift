@@ -45,7 +45,7 @@ private struct CommentThreadGuides:ViewModifier {
                 Rectangle().fill(Color.primary.opacity(0.12)).frame(width:1,height:20).accessibilityHidden(true)
                 button(value:-1,count:state.downCount,label:String(localized:"Downvote",bundle:.module))
             }
-            .modifier(EngagementPill(compact:compact)).tint(.indigo)
+            .modifier(EngagementPill(compact:compact)).tint(.blue)
             .fixedSize(horizontal:true,vertical:false)
             if failed {Text(String(localized:"Could not save your vote.",bundle:.module)).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("releasekit.vote.error")}
         }
@@ -57,11 +57,11 @@ private struct CommentThreadGuides:ViewModifier {
                 else {Image(systemName:(value==1 ? "arrowtriangle.up":"arrowtriangle.down")+(state.selected==value ? ".fill":"")).font(.system(size:compact ? 17:19,weight:.medium)).frame(width:compact ? 19:21,height:compact ? 22:24)}
                 if value==1 {
                     Text("\(state.upCount-state.downCount)").font(compact ? .subheadline.weight(.semibold):.body.weight(.semibold)).monospacedDigit()
-                        .foregroundStyle(state.selected==0 ? Color.primary:Color.indigo)
+                        .foregroundStyle(state.selected==0 ? Color.primary:Color.blue)
                 }
             }
             .padding(.horizontal,12).frame(minWidth:44,minHeight:44)
-            .foregroundStyle(state.selected==value ? Color.indigo:Color.primary)
+            .foregroundStyle(state.selected==value ? Color.blue:Color.primary)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain).disabled(busy)
@@ -84,8 +84,8 @@ private struct CommentThreadGuides:ViewModifier {
         if let badge=ReleaseBadge.resolve(version:version,installed:runtime.installedVersion,latest:runtime.config?.app.latestVersion) {
             Text(badge == .installed ? String(localized:"Installed",bundle:.module):String(localized:"Latest",bundle:.module))
                 .font(.caption2.weight(.semibold)).padding(.horizontal,8).padding(.vertical,4)
-                .foregroundStyle(badge == .installed ? Color.green:Color.indigo)
-                .background((badge == .installed ? Color.green:Color.indigo).opacity(0.12),in:Capsule())
+                .foregroundStyle(badge == .installed ? Color.green:Color.blue)
+                .background((badge == .installed ? Color.green:Color.blue).opacity(0.12),in:Capsule())
         }
     }
 }
@@ -137,19 +137,19 @@ private struct CommentThreadRow:Identifiable {
             Section(String(localized:"Comments",bundle:.module)) {
                 if commentsEnabled {
                     if runtime.offline {Label(String(localized:"Offline — showing saved comments",bundle:.module),systemImage:"wifi.slash").font(.caption).foregroundStyle(.secondary)}
-                    if loading {ProgressView(String(localized:"Loading comments…",bundle:.module)).tint(.indigo)}
-                    if failed {Text("Could not load comments.",bundle:.module).foregroundStyle(.secondary);Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}.tint(.indigo)}
+                    if loading {ProgressView(String(localized:"Loading comments…",bundle:.module)).tint(.blue)}
+                    if failed {Text("Could not load comments.",bundle:.module).foregroundStyle(.secondary);Button(String(localized:"Try again",bundle:.module)){Task{await refresh()}}.tint(.blue)}
                     if comments.isEmpty && !failed && !loading {Text("No comments yet.",bundle:.module).foregroundStyle(.secondary)}
                     ForEach(threadRows){row in
                         if row.loadMore {
                             Button(String(localized:"Load more replies",bundle:.module)){Task{await loadReplies(row.comment)}}
-                                .tint(.indigo).disabled(loadingReplyParents.contains(row.comment.id))
+                                .tint(.blue).disabled(loadingReplyParents.contains(row.comment.id))
                                 .padding(.vertical,12)
                                 .modifier(CommentThreadGuides(depth:row.depth+1,separatorDepth:row.separatorDepth))
                                 .accessibilityIdentifier("releasekit.comment.more.\(row.comment.id)")
                         } else {commentRow(row.comment,depth:row.depth,separatorDepth:row.separatorDepth)}
                     }
-                    if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.tint(.indigo).disabled(loadingMore)}
+                    if nextCursor != nil {Button(String(localized:"Load more comments",bundle:.module)){Task{await loadMore()}}.tint(.blue).disabled(loadingMore)}
                     if actionFailed {Text("This action could not be completed.",bundle:.module).font(.caption).foregroundStyle(.secondary)}
                 } else {Text("Comments are disabled for this app.",bundle:.module).foregroundStyle(.secondary)}
             }
@@ -192,9 +192,9 @@ private struct CommentThreadRow:Identifiable {
         NavigationStack {
             VStack(alignment:.leading,spacing:20) {
                 Text("Be respectful. Do not post abuse, hate, spam, or private information.",bundle:.module)
-                if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Read the full guidelines",bundle:.module),destination:url).tint(.indigo)}
+                if let url=runtime.config?.legal.guidelinesUrl {Link(String(localized:"Read the full guidelines",bundle:.module),destination:url).tint(.blue)}
                 if actionFailed {Text("This action could not be completed.",bundle:.module).foregroundStyle(.secondary)}
-                Button(String(localized:"I agree",bundle:.module)){Task{do{try await runtime.acceptGuidelines();agreed=true;showGuidelines=false}catch{actionFailed=true}}}.buttonStyle(.borderedProminent).tint(.indigo)
+                Button(String(localized:"I agree",bundle:.module)){Task{do{try await runtime.acceptGuidelines();agreed=true;showGuidelines=false}catch{actionFailed=true}}}.buttonStyle(.borderedProminent).tint(.blue)
                 Spacer()
             }.padding().navigationTitle(String(localized:"Community guidelines",bundle:.module)).navigationBarTitleDisplayMode(.inline)
                 .toolbar{ToolbarItem(placement:.cancellationAction){Button(String(localized:"Cancel",bundle:.module)){showGuidelines=false}}}
@@ -207,7 +207,7 @@ private struct CommentThreadRow:Identifiable {
             HStack {
                 Text(comment.author.name ?? "User \(comment.author.tag ?? "")").font(.caption.bold())
                 if comment.author.isMe {Text("You",bundle:.module).font(.caption2).foregroundStyle(.secondary)}
-                if comment.author.kind=="developer" {Text("Developer",bundle:.module).font(.caption2).foregroundStyle(Color.indigo)}
+                if comment.author.kind=="developer" {Text("Developer",bundle:.module).font(.caption2).foregroundStyle(Color.blue)}
                 Spacer()
                 if (comment.author.isMe && !deleted) || (!removed && comment.status=="visible" && !comment.author.isMe) {
                     Menu {commentActions(comment)} label:{Image(systemName:"ellipsis").frame(minWidth:44,minHeight:44).contentShape(Rectangle())}
@@ -233,7 +233,7 @@ private struct CommentThreadRow:Identifiable {
                             Label(String(localized:"Reply",bundle:.module),systemImage:"arrowshape.turn.up.left")
                                 .font(.subheadline).frame(minWidth:44,minHeight:44).contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain).foregroundStyle(.indigo)
+                        .buttonStyle(.plain).foregroundStyle(.blue)
                         .disabled(runtime.config?.me.banned == true)
                         .accessibilityIdentifier("releasekit.comment.reply.\(comment.id)")
                     }
@@ -341,7 +341,7 @@ private struct CommentThreadRow:Identifiable {
                 }
                 Section {
                     if let name=runtime.config?.me.displayName {LabeledContent(String(localized:"Posting as",bundle:.module),value:name)}
-                    TextEditor(text:$text).textInputAutocapitalization(.never).textCase(nil).font(.body).tint(.indigo).frame(minHeight:140).accessibilityLabel(Text("Comment",bundle:.module)).accessibilityIdentifier("releasekit.comment.body")
+                    TextEditor(text:$text).textInputAutocapitalization(.never).textCase(nil).font(.body).tint(.blue).frame(minHeight:140).accessibilityLabel(Text("Comment",bundle:.module)).accessibilityIdentifier("releasekit.comment.body")
                     Text("\(text.count)/1000").font(.caption).foregroundStyle(.secondary)
                 } footer:{Text("Your comment will appear publicly after posting.",bundle:.module)}
                 if let error {Section {Text(error).foregroundStyle(.red).accessibilityIdentifier("releasekit.comment.error")}}

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.0-rc.11
+
+- Use system blue for selected votes, Latest badges, developer labels, reply actions, links, loading indicators and composer accents. Keep Installed green and toolbar controls adaptive primary.
+
 ## 1.0.0-rc.10
 
 - Delete your own comments from the ellipsis menu with confirmation. Preserve replies and show a neutral deletion notice, invalidate cached discussions and update counts.

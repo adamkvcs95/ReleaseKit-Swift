@@ -2,11 +2,11 @@
 
 Native changelog, automatic What's New, release/comment voting and community comments. iOS 17+, Swift 6, system frameworks only.
 
-**Current candidate: 1.0.0-rc.10.** Core and simulator checks are automated; a signed real-iPhone App Attest test is required before promotion to stable 1.0.0. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+**Current candidate: 1.0.0-rc.11.** Core and simulator checks are automated; a signed real-iPhone App Attest test is required before promotion to stable 1.0.0. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ## Install
 
-Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select the `1.0.0-rc.10` pre-release (or `main` while testing), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
+Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select the `1.0.0-rc.11` pre-release (or `main` while testing), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
 
 ```swift
 import SwiftUI
@@ -35,7 +35,7 @@ Use `ReleaseKitSettingsLink()` or `ReleaseKitChangelogView()` inside an existing
 
 First install records the version without interrupting the user. A subsequent version change fetches that installed version's release notes and presents once. A downgrade is skipped; a release is marked handled only after its sheet appears. Hidden releases are skipped, unavailable notes retry on subsequent attempts with bounded pending-state lifetimes. State is stored separately for each endpoint/app key/installation. Concurrent presentation attempts are guarded.
 
-`Options.whatsNew` controls enabled state, delay, first-launch opt-in and debug force-show. The app's Info.plist `CFBundleShortVersionString` is the source of the installed version. The changelog uses three-line previews with 10-point spacing, Installed/Latest badges, dates, counts and outlined vote capsules (up triangle, net score, divider, down triangle; filled selection with indigo accents) and a neighboring comment-count capsule; details show complete notes. Toolbar actions use adaptive primary colors (dark in light mode, light in dark mode); content accents remain indigo and Installed stays green. The top ellipsis menu opens Community guidelines and Contact developer. The bottom-right square.and.pencil icon opens comment composition. There is no detail footer branding.
+`Options.whatsNew` controls enabled state, delay, first-launch opt-in and debug force-show. The app's Info.plist `CFBundleShortVersionString` is the source of the installed version. The changelog uses three-line previews with 10-point spacing, Installed/Latest badges, dates, counts and outlined vote capsules (up triangle, net score, divider, down triangle; filled selection with blue accents) and a neighboring comment-count capsule; details show complete notes. Toolbar actions use adaptive primary colors (dark in light mode, light in dark mode); content accents remain blue and Installed stays green. The top ellipsis menu opens Community guidelines and Contact developer. The bottom-right square.and.pencil icon opens comment composition. There is no detail footer branding.
 
 ## Community
 
