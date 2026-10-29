@@ -2,8 +2,8 @@
 
 Native iOS 17+ release notes/community SDK. Swift 6, system frameworks only.
 Repository: https://github.com/adamkvcs95/ReleaseKit-Swift
-Candidate: 1.0.0-rc.11; stable 1.0.0 requires the signed real-iPhone App Attest release gate.
+Stable: 1.0.0. App Attest is experimental, disabled by default and excluded from stable scope by the owner on 2026-10-29.
 Configure once with the public rk_pub_ app key. Automatic updates: .releaseKitWhatsNew(). Explicit changelog: .releaseKitChangelog(isPresented:). Navigation: ReleaseKitSettingsLink()/ReleaseKitChangelogView().
-Includes release/comment votes, automatic comments, pseudonyms, report/block, private offline cache/ETags, bounded event queue and optional DeviceCheck App Attest. Reads remain available on unsupported devices; required attestation blocks their writes.
+Includes release/comment votes, automatic comments, pseudonyms, report/block, private offline cache/ETags, bounded event queue and experimental opt-in DeviceCheck App Attest. Reads remain available on unsupported devices; required attestation blocks their writes.
 Full integration and limitations: README.md, AGENTS.md, RELEASE_CHECKLIST.md, CHANGELOG.md.
-Never promise stable or physical-device validation based only on compilation or Apple sample vectors.
+Never claim physical-device App Attest validation based only on compilation or Apple sample vectors.

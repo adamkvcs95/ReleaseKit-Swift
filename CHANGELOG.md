@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0
+
+- First stable release of the native changelog, automatic What’s New, release/comment voting, threaded comments, reporting, blocking, own-comment deletion and private offline read cache.
+- Use system blue content accents, green Installed badges and adaptive toolbar controls.
+- App Attest is experimental and now disabled by default. Explicit `.automatic` opts in; signed real-device verification is still outstanding and is outside the stable release scope.
+- Document stable SwiftUI/UIKit integration and semantic-version installation from 1.0.0.
+
 ## 1.0.0-rc.11
 
 - Use system blue for selected votes, Latest badges, developer labels, reply actions, links, loading indicators and composer accents. Keep Installed green and toolbar controls adaptive primary.

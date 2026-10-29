@@ -2,11 +2,11 @@
 
 Native changelog, automatic What's New, release/comment voting and community comments. iOS 17+, Swift 6, system frameworks only.
 
-**Current candidate: 1.0.0-rc.11.** Core and simulator checks are automated; a signed real-iPhone App Attest test is required before promotion to stable 1.0.0. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+**Stable version: 1.0.0.** App Attest is experimental, disabled by default and excluded from the stable feature scope. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for validation and remaining experimental checks.
 
 ## Install
 
-Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select the `1.0.0-rc.11` pre-release (or `main` while testing), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
+Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select **Up to Next Major Version** from `1.0.0` (or **Exact Version** `1.0.0`), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
 
 ```swift
 import SwiftUI
@@ -49,9 +49,9 @@ A private disk cache stores validated read responses, partitioned by endpoint, a
 
 Comments, votes, reports and blocks are never queued. Analytics events alone have a bounded queue of 50, retried after configuration loads (best effort, at-least-once). Host apps must describe the enabled data collection in their own privacy disclosures. The privacy manifest declares anonymous identifiers, product interactions and user content; no required-reason APIs are used by this SDK.
 
-## App Attest
+## App Attest — experimental
 
-`Options.appAttest` defaults to `.automatic`; `.disabled` opts out. On supported real devices, the SDK registers a Secure Enclave key with Apple and the ReleaseKit server, then signs each write with a fresh server challenge. The server verifies the Apple certificate chain, nonce, app identity, public key, environment, signature, counter and single-use challenge. Keys are scoped to endpoint/app/installation and stored in Keychain; no private key is uploaded. Invalid keys can re-enroll once. Apple service availability failures preserve optional, unverified operation; an app requiring attestation rejects unverified writes. Reads always remain available.
+`Options.appAttest` defaults to `.disabled`. Stable integrations need no Apple Team ID or App Attest entitlement. Explicit `.automatic` opts into the experimental implementation, which has not passed the signed real-iPhone verification gate. Keep server-side Require App Attest off for default integrations; a server requiring proofs rejects writes from this default configuration. On supported real devices, the SDK registers a Secure Enclave key with Apple and the ReleaseKit server, then signs each write with a fresh server challenge. The server verifies the Apple certificate chain, nonce, app identity, public key, environment, signature, counter and single-use challenge. Keys are scoped to endpoint/app/installation and stored in Keychain; no private key is uploaded. Invalid keys can re-enroll once. Apple service availability failures preserve optional, unverified operation; an app requiring attestation rejects unverified writes. Reads always remain available.
 
 In the ReleaseKit dashboard, enter the **Apple App ID prefix** (usually the 10-character Team ID) from Apple Developer → Certificates, Identifiers & Profiles → Identifiers → your app. This is different from the ASC Issuer ID. Configure the host app's `com.apple.developer.devicecheck.appattest-environment` entitlement with appropriate provisioning. Production/TestFlight use production proofs. Development proofs require an explicitly enabled test server; `RK_ATTEST_ALLOW_DEV` remains false on production. Keep Require App Attest off until a signed real-device integration test passes. Unsupported devices and Simulator remain unverified; if required, they can read but cannot write.
 

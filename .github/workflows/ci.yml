@@ -16,5 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: swift test
+      - name: Run iOS integration tests
+        run: |
+          device_id=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; devices=json.load(sys.stdin)["devices"]; print(next(device["udid"] for group in devices.values() for device in group if device["name"].startswith("iPhone")))')
+          xcodebuild test -scheme ReleaseKit -destination "platform=iOS Simulator,id=$device_id" CODE_SIGNING_ALLOWED=NO
       - run: xcodebuild -scheme ReleaseKit -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
       - run: xcodebuild -project Examples/ReleaseKitDemo/ReleaseKitDemo.xcodeproj -scheme ReleaseKitDemo -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build

@@ -24,7 +24,7 @@ import ReleaseKit
                     Text("A native changelog for your app.").foregroundStyle(.secondary)
                     Button("Open changelog"){showChangelog=true}.buttonStyle(.borderedProminent).accessibilityIdentifier("releasekit.demo.open")
                 }.padding().navigationTitle("Demo")
-            }.tint(.indigo).releaseKitChangelog(isPresented:$showChangelog).releaseKitWhatsNew(isEnabled:!showChangelog)
+            }.tint(.blue).releaseKitChangelog(isPresented:$showChangelog).releaseKitWhatsNew(isEnabled:!showChangelog)
         }
     }
 }

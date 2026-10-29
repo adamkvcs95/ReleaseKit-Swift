@@ -18,7 +18,7 @@ import ReleaseKitCore
         public enum AppAttest {case automatic,disabled}
         public enum LogLevel {case off,error,warning,debug}
         public var baseURL:URL;public var whatsNew:WhatsNew;public var comments:Comments;public var appAttest:AppAttest;public var logLevel:LogLevel
-        public init(baseURL:URL=URL(string:"https://releasek.it")!,whatsNew:WhatsNew = .init(),comments:Comments = .init(),appAttest:AppAttest = .automatic,logLevel:LogLevel = .warning){self.baseURL=baseURL;self.whatsNew=whatsNew;self.comments=comments;self.appAttest=appAttest;self.logLevel=logLevel}
+        public init(baseURL:URL=URL(string:"https://releasek.it")!,whatsNew:WhatsNew = .init(),comments:Comments = .init(),appAttest:AppAttest = .disabled,logLevel:LogLevel = .warning){self.baseURL=baseURL;self.whatsNew=whatsNew;self.comments=comments;self.appAttest=appAttest;self.logLevel=logLevel}
     }
     static var runtime:Runtime?
     public static func configure(appKey:String,options:Options = .init()) {
