@@ -11,6 +11,8 @@ Release: `1.0.1`. The owner approved stable changelog/community/offline scope on
 
 ## Recorded verification
 
+- 2026-10-31 (1.0.2): 30 macOS Swift core tests pass, including the write-review URL for a numeric `app.appStoreId` and rejection of a missing or non-numeric id. The iOS demo build shows Rate on the App Store, with a star, in the same capsule as the vote and directly under it. The stable tag remains gated on this commit's CI matrix.
+
 - 2026-10-29 (1.0.1): 30 local macOS Swift tests and a generic iOS Simulator library build pass. The signed simulator demo visually verifies the redesigned sheet with real Habitsy 1.1.24 and Today App 4.0 notes: app icon, inline votes, pinned full-width Continue and gradient-masked material extending under the home indicator. Both presentation paths offer 65% and large detents. Glass styling is compiler-guarded for older Xcode toolchains. The stable tag remains gated on the exact commit's CI matrix below.
 
 - 2026-10-29: 30 macOS Swift tests pass. The iOS simulator runs 32 tests, including public Options default `.disabled`, explicit experimental `.automatic`, unconfigured views, and the core contracts.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+- Show Rate on the App Store under the release vote on the automatic What's New sheet. The capsule matches the vote control and includes a star. It opens that app's App Store write-review page when config includes a numeric `app.appStoreId`.
+
 ## 1.0.1
 
 - Fade in a real system-material backdrop blur behind Continue and extend it below the bottom safe area.

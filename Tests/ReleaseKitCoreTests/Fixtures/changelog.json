@@ -1,6 +1,6 @@
 {
   "config": {
-    "app":{"id":"app1","slug":"my-app","name":"My App","iconUrl":null,"latestVersion":"4.0","changelogUrl":"https://example.test/my-app","ideasUrl":null},
+    "app":{"id":"app1","slug":"my-app","name":"My App","iconUrl":null,"latestVersion":"4.0","changelogUrl":"https://example.test/my-app","appStoreId":"6461726826","ideasUrl":null},
     "developer":{"name":"Developer","contactEmail":"dev@example.test","contactUrl":null},
     "features":{"comments":false,"votes":true,"ideas":false,"attestation":"off"},
     "branding":{"showPoweredBy":true},

@@ -33,6 +33,22 @@
         }
       }
     },
+    "Rate on the App Store": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rate on the App Store"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Értékelés az App Store-ban"
+          }
+        }
+      }
+    },
     "Continue": {
       "localizations": {
         "en": {

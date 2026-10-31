@@ -10,7 +10,8 @@ import ReleaseKit
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("--test-offline"){URLProtocol.registerClass(DemoOfflineProtocol.self)}
         #endif
-        ReleaseKit.configure(appKey:key,options:.init(baseURL:url,whatsNew:.init(isEnabled:true),comments:.init(isEnabled:true)))
+        let forceWhatsNew=ProcessInfo.processInfo.arguments.contains("--show-whats-new")
+        ReleaseKit.configure(appKey:key,options:.init(baseURL:url,whatsNew:.init(isEnabled:true,debugAlwaysShow:forceWhatsNew),comments:.init(isEnabled:true)))
         #if DEBUG
         _showChangelog=State(initialValue:ProcessInfo.processInfo.arguments.contains("--show-changelog"))
         #endif

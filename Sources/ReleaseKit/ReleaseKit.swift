@@ -168,6 +168,21 @@ private struct WhatsNewSheet:View {
                         VoteControl(runtime:runtime,type:"release",id:release.id,up:release.upCount,down:release.downCount,selected:release.myVote)
                             .padding(.top,4)
                     }
+                    if let reviewURL=AppStoreReview.url(appStoreId:runtime.config?.app.appStoreId) {
+                        Link(destination:reviewURL) {
+                            HStack(spacing:8) {
+                                Image(systemName:"star").font(.system(size:19,weight:.medium)).frame(width:21,height:24).accessibilityHidden(true)
+                                Text("Rate on the App Store",bundle:.module).font(.body.weight(.semibold))
+                            }
+                            .padding(.horizontal,12)
+                            .frame(minHeight:44)
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.primary)
+                        .modifier(EngagementPill(compact:false))
+                        .fixedSize(horizontal:true,vertical:false)
+                        .accessibilityIdentifier("releasekit.whatsnew.rate")
+                    }
                 }
                 .frame(maxWidth:.infinity,alignment:.leading)
                 .padding(20)

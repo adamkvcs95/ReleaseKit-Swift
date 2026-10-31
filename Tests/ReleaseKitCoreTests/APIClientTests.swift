@@ -60,6 +60,8 @@ final class APIClientTests:XCTestCase {
     private func client()->APIClient {let config=URLSessionConfiguration.ephemeral;config.protocolClasses=[SDKProtocol.self];return APIClient(baseURL:URL(string:"https://example.test")!,appKey:"rk_pub_0123456789ABCDEFGHIJKLMN",anonID:"a2e6885b-9e93-4308-a632-81d8effd08bd",session:URLSession(configuration:config))}
     func testLoadsConfigAndPaginatesWithAnonymousHeaders() async throws {
         let api=client();let config=try await api.config();XCTAssertTrue(config.features.votes);XCTAssertFalse(config.features.comments)
+        XCTAssertEqual(AppStoreReview.url(appStoreId:config.app.appStoreId)?.absoluteString,"https://apps.apple.com/app/id6461726826?action=write-review")
+        XCTAssertNil(AppStoreReview.url(appStoreId:nil));XCTAssertNil(AppStoreReview.url(appStoreId:""));XCTAssertNil(AppStoreReview.url(appStoreId:"12ab"))
         let first=try await api.releases();XCTAssertEqual(first.items.first?.version,"4.0");XCTAssertEqual(first.nextCursor,"next-page")
         let next=try await api.releases(cursor:first.nextCursor);XCTAssertTrue(next.items.isEmpty);XCTAssertNil(next.nextCursor)
     }

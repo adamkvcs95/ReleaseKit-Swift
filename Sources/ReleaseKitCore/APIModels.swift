@@ -1,7 +1,7 @@
 import Foundation
 
 package struct AppConfig: Decodable, Sendable {
-    package struct App: Decodable, Sendable { package let id:String; package let slug:String; package let name:String; package let iconUrl:URL?; package let latestVersion:String?; package let changelogUrl:URL; package let ideasUrl:URL? }
+    package struct App: Decodable, Sendable { package let id:String; package let slug:String; package let name:String; package let iconUrl:URL?; package let latestVersion:String?; package let changelogUrl:URL; package let appStoreId:String?; package let ideasUrl:URL? }
     package struct Developer: Decodable, Sendable { package let name:String; package let contactEmail:String; package let contactUrl:URL? }
     package struct Features: Decodable, Sendable { package let comments:Bool; package let votes:Bool; package let commentVotes:Bool?; package let ideas:Bool; package let attestation:String }
     package struct Branding: Decodable, Sendable { package let showPoweredBy:Bool }
