@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+- License the package under MIT.
+
 ## 1.0.2
 
 - Show Rate on the App Store under the release vote on the automatic What's New sheet. The capsule matches the vote control and includes a star. It opens that app's App Store write-review page when config includes a numeric `app.appStoreId`.

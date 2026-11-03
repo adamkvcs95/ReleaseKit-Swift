@@ -2,11 +2,11 @@
 
 Native changelog, automatic What's New, release/comment voting and community comments. iOS 17+, Swift 6, system frameworks only.
 
-**Stable version: 1.0.2.** App Attest is experimental, disabled by default and excluded from the stable feature scope. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for validation and remaining experimental checks.
+**Stable version: 1.0.3.** Licensed under the [MIT License](LICENSE). App Attest is experimental, disabled by default and excluded from the stable feature scope. See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for validation and remaining experimental checks.
 
 ## Install
 
-Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select **Up to Next Major Version** from `1.0.2` (or **Exact Version** `1.0.2`), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
+Add `https://github.com/adamkvcs95/ReleaseKit-Swift` in Xcode, select **Up to Next Major Version** from `1.0.3` (or **Exact Version** `1.0.3`), and link **ReleaseKit**. Use the public `rk_pub_…` app key from ReleaseKit → your app → SDK installation. Never use an Appwrite key or Apple .p8 private key.
 
 ```swift
 import SwiftUI
